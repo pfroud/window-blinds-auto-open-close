@@ -1,0 +1,1 @@
+# window-blinds-auto-open-close
