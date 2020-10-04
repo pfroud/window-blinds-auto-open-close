@@ -29,6 +29,12 @@ def get_sunrise_time():
         traceback.print_exc()
         return None
         
+         #formatString = "%I:%M:%S %p"
+        #print("sunrise: ", datetime.fromisoformat(sunriseStr)
+         #                     .astimezone()
+          #                    .strftime(formatString)
+           #               )
+        
     
     if response["status"] == "OK":
         sunrise_string = response["results"]["sunrise"]
@@ -157,5 +163,46 @@ def make_clock_gui():
      
     guizero_app.display() #blocks until the guizero window is closed
 
+
+def make_end_user_gui():
+    guizero_app = guizero.App(title="Window blinds thing")
+     
+    guizero.Box(guizero_app, height="10")
+    box_daily_alarm = guizero.Box(guizero_app)
+    box_daily_alarm.set_border(1, "#aaaaaa")
+     
+    guizero.Text(box_daily_alarm, text="Daily alarm")
+    guizero.Box(box_daily_alarm, height="10")
+    
+    box_close_blinds_time = guizero.Box(box_daily_alarm)
+    guizero.Text(box_close_blinds_time, text="Close blinds ", align="left")
+    guizero.TextBox(box_close_blinds_time, align="left", text="1 hr")
+    guizero.Text(box_close_blinds_time, text=" before sunrise.", align="left")
+    
+    box_open_blinds_time = guizero.Box(box_daily_alarm)
+    guizero.Text(box_open_blinds_time, text="Open blinds at ", align="left")
+    guizero.TextBox(box_open_blinds_time, text="11 am", align="left")
+    guizero.Text(box_open_blinds_time, text=".", align="left")
+    
+    guizero.PushButton(box_daily_alarm, text="Update")
+    
+    guizero.Box(guizero_app, height="20")
+    
+    box_custom_alarm = guizero.Box(guizero_app)
+    box_custom_alarm.set_border(1, "#aaaaaa")
+    guizero.Text(box_custom_alarm, text="Custom alarm")
+    guizero.Box(box_custom_alarm, height="10")
+    
+    box_custom_alarm_time = guizero.Box(box_custom_alarm)
+    guizero.Text(box_custom_alarm_time, text="Close blinds now, then open blinds in/at ", align="left")
+    guizero.TextBox(box_custom_alarm_time, text="2 hr", align="left")
+    guizero.Text(box_custom_alarm_time, text=".", align="left")
+    
+    guizero.PushButton(box_custom_alarm, text="Go")
+    
+        
+    guizero_app.display() #blocks until the guizero window is closed
+     
+
 if __name__ == '__main__':
-    make_motor_gui()
+    make_end_user_gui()
