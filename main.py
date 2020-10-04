@@ -7,6 +7,7 @@ import requests
 from neopixel_ring_clock import NeopixelRingClock
 from window_blinds import WindowBlinds
 import traceback
+import dateparser
 
 
 
@@ -57,7 +58,6 @@ def make_motor_gui():
     pwm_pin = 16 #GPIO 16 = rpi pin 36
     direction_pin = 12 #GPIO 12 = rpi pin 32
     
-
     guizero_app = guizero.App(title="Motor tester")
     guizero.Text(guizero_app, text="Set duty cycle:")
     
@@ -166,6 +166,10 @@ def make_clock_gui():
 
 def make_end_user_gui():
     guizero_app = guizero.App(title="Window blinds thing")
+    
+    pwm_pin = 16 #GPIO 16 = rpi pin 36
+    direction_pin = 12 #GPIO 12 = rpi pin 32
+    window_blinds = WindowBlinds(guizero_app, direction_pin, pwm_pin)
      
     guizero.Box(guizero_app, height="10")
     box_daily_alarm = guizero.Box(guizero_app)
@@ -176,8 +180,8 @@ def make_end_user_gui():
     
     box_close_blinds_time = guizero.Box(box_daily_alarm)
     guizero.Text(box_close_blinds_time, text="Close blinds ", align="left")
-    guizero.TextBox(box_close_blinds_time, align="left", text="1 hr")
-    guizero.Text(box_close_blinds_time, text=" before sunrise.", align="left")
+    guizero.TextBox(box_close_blinds_time, align="left", text="60")
+    guizero.Text(box_close_blinds_time, text="minutes before sunrise.", align="left")
     
     box_open_blinds_time = guizero.Box(box_daily_alarm)
     guizero.Text(box_open_blinds_time, text="Open blinds at ", align="left")
@@ -194,14 +198,42 @@ def make_end_user_gui():
     guizero.Box(box_custom_alarm, height="10")
     
     box_custom_alarm_time = guizero.Box(box_custom_alarm)
-    guizero.Text(box_custom_alarm_time, text="Close blinds now, then open blinds in/at ", align="left")
-    guizero.TextBox(box_custom_alarm_time, text="2 hr", align="left")
+    guizero.Text(box_custom_alarm_time, text="Close blinds now, then open blinds ", align="left")
+    textbox_custom_alarm = guizero.TextBox(box_custom_alarm_time, text="in 20 seconds", align="left")
     guizero.Text(box_custom_alarm_time, text=".", align="left")
     
-    guizero.PushButton(box_custom_alarm, text="Go")
+    text_parsed_custom_alarm = guizero.Text(box_custom_alarm, text="(click button to parse date)")
+    
+    def update_custom_alarm():
+        alarm_time_str = textbox_custom_alarm.value
+        parsed_datetime = dateparser.parse(alarm_time_str)
+        if parsed_datetime == None:
+            text_parsed_custom_alarm.text_color = "red"
+            text_parsed_custom_alarm.value = f"Couldn't parse a date from string \"{alarm_time_str}\""
+            return
+        
+        text_parsed_custom_alarm.text_color = "black"
+        text_parsed_custom_alarm.value = parsed_datetime.strftime("%A %d %B %Y, %I:%M:%S %p")
+        
+        ts_alarm_millis = parsed_datetime.timestamp() * 1000
+        ts_now_millis = datetime.now().timestamp() * 1000
+        ts_difference_millis = ts_alarm_millis - ts_now_millis
+        ts_difference_sec = ts_difference_millis / 1000
+        ts_difference_minute = ts_difference_sec / 60
+        
+        print(f"set the timeout for {ts_difference_millis}ms == {ts_difference_sec}sec == {ts_difference_minute}minute")
+        window_blinds.go_to_closed()
+        
+        guizero_app.after(round(ts_difference_millis), window_blinds.go_to_open)
+        
+        
+        
+    guizero.PushButton(box_custom_alarm, text="Go", command=update_custom_alarm)
     
         
     guizero_app.display() #blocks until the guizero window is closed
+ 
+
      
 
 if __name__ == '__main__':

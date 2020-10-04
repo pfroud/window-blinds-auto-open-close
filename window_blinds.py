@@ -48,18 +48,22 @@ class WindowBlinds:
     def get_accelerometer_z_Gs(self):
         return self.mpu.get_accel_data()["z"]
     
-    def go_to_accelerometer_Gs(self, accelerometer_Gs_target):
-        print("\ngoing to " + str(accelerometer_Gs_target))
+    def go_to_accelerometer_Gs(self, accelerometer_Gs_target, debug_printouts=False):
+        if debug_printouts:
+            print("\ngoing to " + str(accelerometer_Gs_target))
         
         accelerometer_Gs_present = self.get_accelerometer_z_Gs()
-        print("   present = {:4.2f}".format(accelerometer_Gs_present))
+        if debug_printouts:
+            print("   present = {:4.2f}".format(accelerometer_Gs_present))
         
         accelerometer_Gs_difference = accelerometer_Gs_target - accelerometer_Gs_present
-        print("difference = {:4.2f}".format(accelerometer_Gs_difference))
+        if debug_printouts:
+            print("difference = {:4.2f}".format(accelerometer_Gs_difference))
         
         close_enough = 0.05
         if(abs(accelerometer_Gs_difference) < close_enough):
-            print("close enough, returning")
+            if debug_printouts:
+                print("close enough, returning")
             self.pwm_device.value = 0
             return
             
