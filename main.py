@@ -3,6 +3,7 @@
 
 import guizero
 from datetime import datetime
+from datetime import timedelta
 import requests
 from neopixel_ring_clock import NeopixelRingClock
 from window_blinds import WindowBlinds
@@ -30,16 +31,10 @@ def get_sunrise_time():
         traceback.print_exc()
         return None
         
-         #formatString = "%I:%M:%S %p"
-        #print("sunrise: ", datetime.fromisoformat(sunriseStr)
-         #                     .astimezone()
-          #                    .strftime(formatString)
-           #               )
-        
     
     if response["status"] == "OK":
         sunrise_string = response["results"]["sunrise"]
-        return datetime.fromisoformat(sunrise_string).astimezone()
+        return datetime.fromisoformat(sunrise_string).astimezone().time()
     else:
         print("sunrise-sunset.org API call failed, response status is ", response["status"])
         return None
@@ -182,15 +177,56 @@ def make_end_user_gui():
     
     box_close_blinds_time = guizero.Box(box_daily_alarm)
     guizero.Text(box_close_blinds_time, text="Close blinds ", align="left")
-    guizero.TextBox(box_close_blinds_time, align="left", text="60")
+    textbox_minutes_before_sunrise = guizero.TextBox(box_close_blinds_time, align="left", text="60")
     guizero.Text(box_close_blinds_time, text="minutes before sunrise.", align="left")
     
     box_open_blinds_time = guizero.Box(box_daily_alarm)
     guizero.Text(box_open_blinds_time, text="Open blinds at ", align="left")
-    guizero.TextBox(box_open_blinds_time, text="11 am", align="left")
+    textbox_open_blinds_time = guizero.TextBox(box_open_blinds_time, text="11 am", align="left")
     guizero.Text(box_open_blinds_time, text=".", align="left")
     
-    guizero.PushButton(box_daily_alarm, text="Update")
+    text_daily_alarm_status = guizero.Text(box_daily_alarm, text="Click button to update")
+    
+    def update_daily_alarm():
+      
+        open_at_time = dateparser.parse(textbox_open_blinds_time.value).time()
+        if open_at_time == None:
+            text_daily_alarm_status.text_color = "red"
+            text_daily_alarm_status.value = "Couldn't parse date from string"
+            return
+            
+        now = datetime.now()
+        open_at_datetime = datetime.combine(now.date(), open_at_time.time())
+        
+        
+        minutes_before_sunrise = int(textbox_minutes_before_sunrise.value)
+        sunrise_time = get_sunrise_time()
+        if sunrise_time == None:
+            text_daily_alarm_status.text_color = "red"
+            text_daily_alarm_status.value = "Couldn't get sunrise time"
+            return
+        
+        is_pm = now.hour >= 12
+        
+        if is_pm:
+            # schedule the alarm for tomorrow
+            
+        else:
+            # schedule the alarm for today
+            
+        
+            
+        close_at_datetime = sunrise_datetime - timedelta(minutes=minutes_before_sunrise)
+        
+        
+        
+          
+        text_daily_alarm_status.text_color = "black"
+        text_daily_alarm_status.value = "Close at " + str(close_at_datetime) + " and open at " + str(open_at_datetime)
+    
+    
+    
+    guizero.PushButton(box_daily_alarm, text="Update", command=update_daily_alarm)
     
     guizero.Box(guizero_app, height="40")
     
@@ -208,13 +244,12 @@ def make_end_user_gui():
     text_alarm_status = guizero.Text(box_custom_alarm, text="Press the button to set alarm")
     
     def update_custom_alarm():
-        alarm_time_str = textbox_custom_alarm.value
-        parsed_alarm_datetime = dateparser.parse(alarm_time_str)
+        parsed_alarm_datetime = dateparser.parse(textbox_custom_alarm.value)
         #parsed_alarm_datetime.strftime("%A %d %B %Y, %I:%M:%S %p")
         
         if parsed_alarm_datetime == None:
             text_alarm_status.text_color = "red"
-            text_alarm_status.value = f"Couldn't parse a date from string \"{alarm_time_str}\""
+            text_alarm_status.value = "Couldn't parse date from string"
             return
         
         if parsed_alarm_datetime < datetime.now():
