@@ -11,28 +11,17 @@ class WindowBlinds:
         self.accelerometer_Gs_closed = 5.0
         self.accelerometer_Gs_open = 9.7
         
-        
         self.direction_device = gpiozero.DigitalOutputDevice(direction_pin)
-        
-        #textAccel = guizero.Text(guizero_app, text="Z acceleration: ???")
-        #def update_accelerometer():
-        #    nonlocal latest_accel_z
-        #    latest_accel_z = mpu.get_accel_data()["z"]
-        #    textAccel.value = "Z acceleration: {:4.2f}".format(latest_accel_z)
-        #guizero_app.repeat(100, update_accelerometer)
-
-
-        pwm_frequency_hz = 20_000
-        self.pwm_device = gpiozero.PWMOutputDevice(pwm_pin,  initial_value=0, frequency=pwm_frequency_hz)
+        self.pwm_device = gpiozero.PWMOutputDevice(pwm_pin,  initial_value=0, frequency=20_000)
     
     def stop(self):
         self.pwm_device.off()
         
     def go_to_open(self):
-        self.go_to_accelerometer_Gs(self.accelerometer_Gs_open)
+        self.go_to_accelerometer_Gs(self.accelerometer_Gs_open, None)
         
     def go_to_closed(self):
-        self.go_to_accelerometer_Gs(self.accelerometer_Gs_closed)
+        self.go_to_accelerometer_Gs(self.accelerometer_Gs_closed, None)
         
     def set_cal_open(self):
         gs = get_accelerometer_z_Gs()
@@ -48,32 +37,31 @@ class WindowBlinds:
     def get_accelerometer_z_Gs(self):
         return self.mpu.get_accel_data()["z"]
     
-    def go_to_accelerometer_Gs(self, accelerometer_Gs_target, debug_printouts=False):
-        if debug_printouts:
-            print("\ngoing to " + str(accelerometer_Gs_target))
-        
+    def go_to_accelerometer_Gs(self, accelerometer_Gs_target, previous_is_difference_positive, debug_printouts=True):
         accelerometer_Gs_present = self.get_accelerometer_z_Gs()
-        if debug_printouts:
-            print("   present = {:4.2f}".format(accelerometer_Gs_present))
-        
         accelerometer_Gs_difference = accelerometer_Gs_target - accelerometer_Gs_present
+        
+        is_difference_positive = accelerometer_Gs_difference > 0
+        crossed_zero = previous_is_difference_positive != None and previous_is_difference_positive != is_difference_positive
+        
+        is_close_enough = abs(accelerometer_Gs_difference) < 0.05
+        
         if debug_printouts:
-            print("difference = {:4.2f}".format(accelerometer_Gs_difference))
+                print()
+                print(" target Gs = {:5.2f}".format(accelerometer_Gs_target))
+                print("present Gs = {:5.2f}".format(accelerometer_Gs_present))
+                print("difference = {:5.2f}".format(accelerometer_Gs_difference))
+                print("crossed zero? " + str(crossed_zero))
+                print("close enough? " + str(is_close_enough))
+                
         
-        close_enough = 0.05
-        if(abs(accelerometer_Gs_difference) < close_enough):
-            if debug_printouts:
-                print("close enough, returning")
+        if crossed_zero or is_close_enough:
             self.pwm_device.value = 0
-            return
-            
-        self.direction_device.value = 1 if accelerometer_Gs_difference>0 else 0
-        
-        #pwm_max = 1
-        #accel_to_start_slowing_down_at = 1
-        #line_slope = 1 / accel_to_start_slowing_down_at
-        #new_pwm_value = min(pwm_max, line_slope * abs(difference))
-        #print("  new pwm = {:4.2f}".format(new_pwm_value))
-        #pwm_device.value = new_pwm_value
-        self.pwm_device.value = 1
-        self.guizero_app.after(100, self.go_to_accelerometer_Gs, [accelerometer_Gs_target]);
+            if debug_printouts:
+                print("finished, not scheduling another callback")
+        else:
+            if debug_printouts:
+                print("scheduling another callback")
+            self.direction_device.value = 1 if is_difference_positive else 0
+            self.pwm_device.value = 1
+            self.guizero_app.after(1000, self.go_to_accelerometer_Gs, [accelerometer_Gs_target, is_difference_positive]);

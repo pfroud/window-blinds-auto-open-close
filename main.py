@@ -172,6 +172,8 @@ def make_end_user_gui():
     window_blinds = WindowBlinds(guizero_app, direction_pin, pwm_pin)
      
     guizero.Box(guizero_app, height="10")
+    
+    #################### daily alarm ################
     box_daily_alarm = guizero.Box(guizero_app)
     box_daily_alarm.set_border(1, "#aaaaaa")
      
@@ -192,6 +194,7 @@ def make_end_user_gui():
     
     guizero.Box(guizero_app, height="20")
     
+    ################## one-time custom alarm ##############
     box_custom_alarm = guizero.Box(guizero_app)
     box_custom_alarm.set_border(1, "#aaaaaa")
     guizero.Text(box_custom_alarm, text="Custom alarm")
@@ -202,32 +205,44 @@ def make_end_user_gui():
     textbox_custom_alarm = guizero.TextBox(box_custom_alarm_time, text="in 20 seconds", align="left")
     guizero.Text(box_custom_alarm_time, text=".", align="left")
     
-    text_parsed_custom_alarm = guizero.Text(box_custom_alarm, text="(click button to parse date)")
+    text_alarm_status = guizero.Text(box_custom_alarm, text="Press the button to set alarm")
     
     def update_custom_alarm():
         alarm_time_str = textbox_custom_alarm.value
-        parsed_datetime = dateparser.parse(alarm_time_str)
-        if parsed_datetime == None:
-            text_parsed_custom_alarm.text_color = "red"
-            text_parsed_custom_alarm.value = f"Couldn't parse a date from string \"{alarm_time_str}\""
+        parsed_alarm_datetime = dateparser.parse(alarm_time_str)
+        #parsed_alarm_datetime.strftime("%A %d %B %Y, %I:%M:%S %p")
+        
+        if parsed_alarm_datetime == None:
+            text_alarm_status.text_color = "red"
+            text_alarm_status.value = f"Couldn't parse a date from string \"{alarm_time_str}\""
             return
         
-        text_parsed_custom_alarm.text_color = "black"
-        text_parsed_custom_alarm.value = parsed_datetime.strftime("%A %d %B %Y, %I:%M:%S %p")
+        if parsed_alarm_datetime < datetime.now():
+            text_alarm_status.text_color = "red"
+            text_alarm_status.value = "Can't set alarm to ring in the past"
+            return
         
-        ts_alarm_millis = parsed_datetime.timestamp() * 1000
-        ts_now_millis = datetime.now().timestamp() * 1000
-        ts_difference_millis = ts_alarm_millis - ts_now_millis
-        ts_difference_sec = ts_difference_millis / 1000
-        ts_difference_minute = ts_difference_sec / 60
+        window_blinds.go_to_closed() #starts the blinds closing, does not block
         
-        print(f"set the timeout for {ts_difference_millis}ms == {ts_difference_sec}sec == {ts_difference_minute}minute")
-        window_blinds.go_to_closed()
-        
-        guizero_app.after(round(ts_difference_millis), window_blinds.go_to_open)
+        text_alarm_status.text_color = "black"
         
         
+        def alarm_tick():
+            timedelta = parsed_alarm_datetime - datetime.now()
+            if timedelta.total_seconds() > 0:
+                text_alarm_status.value = "Alarm will ring in " + str(timedelta)
+                guizero_app.after(1000, alarm_tick)
+            else:
+                text_alarm_status.value = "Alarm finished"
+                window_blinds.go_to_open()
+            
+            
+        alarm_tick()
+        guizero_app.after(1000, alarm_tick)
         
+        
+        
+       
     guizero.PushButton(box_custom_alarm, text="Go", command=update_custom_alarm)
     
         
