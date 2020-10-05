@@ -222,15 +222,18 @@ def make_end_user_gui():
             text_alarm_status.value = "Can't set alarm to ring in the past"
             return
         
-        window_blinds.go_to_closed() #starts the blinds closing, does not block
+        #window_blinds.go_to_closed() #starts the blinds closing, does not block
         
         text_alarm_status.text_color = "black"
         
         
         def alarm_tick():
             timedelta = parsed_alarm_datetime - datetime.now()
-            if timedelta.total_seconds() > 0:
-                text_alarm_status.value = "Alarm will ring in " + str(timedelta)
+            total_seconds = timedelta.total_seconds()
+            if total_seconds > 0:
+                hours, remainder = divmod(total_seconds, 60*60)
+                minutes, seconds = divmod(remainder, 60)
+                text_alarm_status.value = f"Alarm will ring in {hours} hr {minutes} min {seconds} sec"
                 guizero_app.after(1000, alarm_tick)
             else:
                 text_alarm_status.value = "Alarm finished"
@@ -238,7 +241,6 @@ def make_end_user_gui():
             
             
         alarm_tick()
-        guizero_app.after(1000, alarm_tick)
         
         
         

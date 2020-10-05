@@ -37,7 +37,7 @@ class WindowBlinds:
     def get_accelerometer_z_Gs(self):
         return self.mpu.get_accel_data()["z"]
     
-    def go_to_accelerometer_Gs(self, accelerometer_Gs_target, previous_is_difference_positive, debug_printouts=True):
+    def go_to_accelerometer_Gs(self, accelerometer_Gs_target, previous_is_difference_positive, debug_printouts=False):
         accelerometer_Gs_present = self.get_accelerometer_z_Gs()
         accelerometer_Gs_difference = accelerometer_Gs_target - accelerometer_Gs_present
         
@@ -57,11 +57,7 @@ class WindowBlinds:
         
         if crossed_zero or is_close_enough:
             self.pwm_device.value = 0
-            if debug_printouts:
-                print("finished, not scheduling another callback")
         else:
-            if debug_printouts:
-                print("scheduling another callback")
             self.direction_device.value = 1 if is_difference_positive else 0
             self.pwm_device.value = 1
             self.guizero_app.after(1000, self.go_to_accelerometer_Gs, [accelerometer_Gs_target, is_difference_positive]);
