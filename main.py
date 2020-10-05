@@ -174,7 +174,7 @@ def make_end_user_gui():
     guizero.Box(guizero_app, height="10")
     
     #################### daily alarm ################
-    box_daily_alarm = guizero.Box(guizero_app)
+    box_daily_alarm = guizero.Box(guizero_app, width="fill")
     box_daily_alarm.set_border(1, "#aaaaaa")
      
     guizero.Text(box_daily_alarm, text="Daily alarm")
@@ -192,17 +192,17 @@ def make_end_user_gui():
     
     guizero.PushButton(box_daily_alarm, text="Update")
     
-    guizero.Box(guizero_app, height="20")
+    guizero.Box(guizero_app, height="40")
     
     ################## one-time custom alarm ##############
-    box_custom_alarm = guizero.Box(guizero_app)
+    box_custom_alarm = guizero.Box(guizero_app, width="fill")
     box_custom_alarm.set_border(1, "#aaaaaa")
     guizero.Text(box_custom_alarm, text="Custom alarm")
     guizero.Box(box_custom_alarm, height="10")
     
     box_custom_alarm_time = guizero.Box(box_custom_alarm)
     guizero.Text(box_custom_alarm_time, text="Close blinds now, then open blinds ", align="left")
-    textbox_custom_alarm = guizero.TextBox(box_custom_alarm_time, text="in 20 seconds", align="left")
+    textbox_custom_alarm = guizero.TextBox(box_custom_alarm_time, text="in 20 seconds", align="left", width=20)
     guizero.Text(box_custom_alarm_time, text=".", align="left")
     
     text_alarm_status = guizero.Text(box_custom_alarm, text="Press the button to set alarm")
@@ -222,7 +222,7 @@ def make_end_user_gui():
             text_alarm_status.value = "Can't set alarm to ring in the past"
             return
         
-        #window_blinds.go_to_closed() #starts the blinds closing, does not block
+        window_blinds.go_to_closed() #starts the blinds closing, does not block
         
         text_alarm_status.text_color = "black"
         
@@ -231,8 +231,17 @@ def make_end_user_gui():
             timedelta = parsed_alarm_datetime - datetime.now()
             total_seconds = timedelta.total_seconds()
             if total_seconds > 0:
-                hours, remainder = divmod(total_seconds, 60*60)
-                minutes, seconds = divmod(remainder, 60)
+                split = str(timedelta).split(":")
+                hours = int(split[0])
+                minutes = int(split[1])
+                seconds = round(float(split[2]))
+                if seconds == 60:
+                    seconds = 0
+                    minutes += 1
+                if minutes == 60:
+                    minutes = 0
+                    hours += 1
+                
                 text_alarm_status.value = f"Alarm will ring in {hours} hr {minutes} min {seconds} sec"
                 guizero_app.after(1000, alarm_tick)
             else:
