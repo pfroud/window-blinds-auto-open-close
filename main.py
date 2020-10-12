@@ -11,15 +11,19 @@ import traceback
 import dateparser
 
 
+DATETIME_FORMAT_STRING = "%A %d %B %Y, %I:%M:%S %p"
 
-def get_sunrise_time():
+
+def get_sunrise_datetime(date):
     # see https://sunrise-sunset.org/api
+    
     url = "https://api.sunrise-sunset.org/json"
     params = {
             # Santa Clara, California (city not county)
             "lat": 37.354444,
             "lng": -121.969167,
-            "formatted": 0
+            "formatted": 0,
+            "date": date.isoformat()
         }
     
     # When formatted==0, the response is ISO 8601 format.
@@ -34,7 +38,7 @@ def get_sunrise_time():
     
     if response["status"] == "OK":
         sunrise_string = response["results"]["sunrise"]
-        return datetime.fromisoformat(sunrise_string).astimezone().time()
+        return datetime.fromisoformat(sunrise_string).astimezone()
     else:
         print("sunrise-sunset.org API call failed, response status is ", response["status"])
         return None
@@ -188,41 +192,54 @@ def make_end_user_gui():
     text_daily_alarm_status = guizero.Text(box_daily_alarm, text="Click button to update")
     
     def update_daily_alarm():
-      
-        open_at_time = dateparser.parse(textbox_open_blinds_time.value).time()
-        if open_at_time == None:
+            
+        # Close the blinds a user-specified amount of time before sunrise.
+        # Open the blinds at a user specified absolute time.
+        
+        now = datetime.now()
+        today = now.date()
+        
+        ######## when to close the blinds - get from sunrise API
+        
+        is_pm = now.hour >= 12
+        date_to_get_sunrise_for = None
+        
+        if is_pm:
+            # schedule the alarm for tomorrow
+            date_to_get_sunrise_for = today + timedelta(days=1)
+                
+        else:
+            # schedule the alarm for today
+            date_to_get_sunrise_for = today
+        
+        sunrise_datetime = get_sunrise_datetime(date_to_get_sunrise_for)
+        if sunrise_datetime == None:
+            text_daily_alarm_status.text_color = "red"
+            text_daily_alarm_status.value = "Couldn't get sunrise datetime"
+            return
+        
+        minutes_before_sunrise = int(textbox_minutes_before_sunrise.value)
+        close_at_datetime = sunrise_datetime - timedelta(minutes=minutes_before_sunrise)
+        
+        #################### when to open the blinds - get from user
+        
+        open_at_datetime_parsed = dateparser.parse(textbox_open_blinds_time.value)
+        if open_at_datetime_parsed == None:
             text_daily_alarm_status.text_color = "red"
             text_daily_alarm_status.value = "Couldn't parse date from string"
             return
             
-        now = datetime.now()
-        open_at_datetime = datetime.combine(now.date(), open_at_time.time())
         
-        
-        minutes_before_sunrise = int(textbox_minutes_before_sunrise.value)
-        sunrise_time = get_sunrise_time()
-        if sunrise_time == None:
-            text_daily_alarm_status.text_color = "red"
-            text_daily_alarm_status.value = "Couldn't get sunrise time"
-            return
-        
-        is_pm = now.hour >= 12
-        
-        if is_pm:
-            # schedule the alarm for tomorrow
-            
-        else:
-            # schedule the alarm for today
-            
+        open_at_datetime = datetime.combine(date_to_get_sunrise_for, open_at_datetime_parsed.time()).astimezone()
         
             
-        close_at_datetime = sunrise_datetime - timedelta(minutes=minutes_before_sunrise)
-        
-        
-        
+       
           
         text_daily_alarm_status.text_color = "black"
-        text_daily_alarm_status.value = "Close at " + str(close_at_datetime) + " and open at " + str(open_at_datetime)
+        text_daily_alarm_status.value = \
+            "Sunrise is:\n"+ sunrise_datetime.strftime(DATETIME_FORMAT_STRING) + \
+            "\n\nClose blinds at:\n" + close_at_datetime.strftime(DATETIME_FORMAT_STRING) + \
+            "\n\nThen open blinds at:\n" + open_at_datetime.strftime(DATETIME_FORMAT_STRING)
     
     
     
@@ -245,7 +262,6 @@ def make_end_user_gui():
     
     def update_custom_alarm():
         parsed_alarm_datetime = dateparser.parse(textbox_custom_alarm.value)
-        #parsed_alarm_datetime.strftime("%A %d %B %Y, %I:%M:%S %p")
         
         if parsed_alarm_datetime == None:
             text_alarm_status.text_color = "red"
