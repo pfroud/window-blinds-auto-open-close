@@ -12,7 +12,7 @@ class NeopixelRingClock:
          self.max_brightness = new_max_brightness
          self.tick()
          
-    def update_time(self, hour, minute, second):
+    def display_time(self, hour, minute, second):
         second_ratio = second / 60
         minute_ratio = (minute + second_ratio) / 60
         hour_ratio = (hour + minute_ratio) / 12
@@ -22,10 +22,11 @@ class NeopixelRingClock:
             if i==0 and hour==11 and minute>30:
                 # The hour hand has almost gone back around to 12 o'clock.
                 # We want the LED with index zero to start fading in.
-                
+                #
                 # The for loop will set i to 0, 1, ..., led_count-2, led_count-1.
-                # Do the computation for an imaginary extra LED but assign the
-                # result to index zero.
+                #
+                # We will do the computation for an imaginary extra LED, at index
+                # led_count, but assign the result to the LED at index zero.
                 led_index_to_compute = self.led_count
                 led_index_to_set = 0
             else:
@@ -65,7 +66,7 @@ class NeopixelRingClock:
             green = 0 #5 if (i >= close_blinds_led_index and i <= open_blinds_led_index) else 0
             self.neopixels[led_index_to_set] = (red, green, blue)
             
-    def tick(self):
+    def update_time_and_display(self):
             now = datetime.now()
             hour = now.hour
             if hour > 11:
@@ -74,10 +75,7 @@ class NeopixelRingClock:
                 hour = hour - 12
             minute = now.minute
             second = now.second
+            
             #print("hour={:d} minute={:d}".format(hour, minute))
             
-            #slider_hour.value = hour
-            #slider_minute.value = minute
-            #slider_second.value = second
-            
-            self.update_time(hour, minute, second)
+            self.display_time(hour, minute, second)
