@@ -60,7 +60,7 @@ def main():
     led_count = 35
     brightness_max = 10
     clock = NeopixelRingClock(neopixel_pin, led_count, brightness_max)
-    clock.update_time_and_display()
+    clock.update()
     
     daily_alarm_close_datetime = None
     daily_alarm_open_datetime = None
@@ -102,7 +102,7 @@ def main():
         
         ######## when to close the blinds - get from sunrise API
         
-        is_pm = now.hour >= 12
+        is_pm = now.hour > 11
         
         if is_pm:
             # schedule the alarm for tomorrow
@@ -225,13 +225,13 @@ def main():
                     minutes = 0
                     hours += 1
                 
-                text_alarm_status.value = f"Alarm will ring in {hours} hr {minutes} min {seconds} sec"
+                text_alarm_status.value = f"One-time alarm will ring in {hours} hr {minutes} min {seconds} sec"
             else:
-                text_alarm_status.value = "Alarm rang at " + now.strftime(DATETIME_FORMAT_STRING)
+                text_alarm_status.value = "One-time alarm rang at " + now.strftime(DATETIME_FORMAT_STRING)
                 one_time_alarm_open_datetime = None
                 window_blinds.go_to_open()
         
-        clock.update_time_and_display
+        clock.update()
         
         
     guizero_app.repeat(1000, tick)
