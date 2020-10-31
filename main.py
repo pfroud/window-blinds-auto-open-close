@@ -147,7 +147,9 @@ def main():
             return
         
         daily_alarm_open_datetime = datetime.combine(date_to_get_sunrise_for, open_at_datetime_parsed.time()).astimezone()
-          
+        
+        clock.put_alarm_region("one-time", daily_alarm_close_datetime, daily_alarm_open_datetime)
+        
         text_daily_alarm_status.text_color = "black"
         text_daily_alarm_status.value = \
             "Sunrise is:\n"+ sunrise_datetime.strftime(DATETIME_FORMAT_STRING) + \
@@ -193,6 +195,7 @@ def main():
         
         one_time_alarm_open_datetime = parsed_datetime
         window_blinds.go_to_closed() #starts the blinds closing, does not block
+        clock.put_alarm_region("one-time", datetime.now(), one_time_alarm_open_datetime)
         text_alarm_status.text_color = "black"
         text_alarm_status.value = "Submitted"
     
@@ -229,6 +232,7 @@ def main():
             else:
                 text_alarm_status.value = "One-time alarm rang at " + now.strftime(DATETIME_FORMAT_STRING)
                 one_time_alarm_open_datetime = None
+                clock.remove_alarm_region("one-time")
                 window_blinds.go_to_open()
         
         clock.update()

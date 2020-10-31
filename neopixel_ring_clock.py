@@ -4,24 +4,29 @@ from datetime import datetime
 
 class NeopixelRingClock:
     def __init__(self, pin, led_count, max_brightness):
-         self.neopixels = NeoPixel(pin, led_count)
-         self.max_brightness = max_brightness
-         self.led_count = led_count
-         self.alarm_regions = {
-            "test": [
-                datetime(2020, 10, 30, 9, 0, 0),
-                datetime(2020, 10, 30, 12+3, 0, 0)
-            ]
-         }
+        self.neopixels = NeoPixel(pin, led_count)
+        self.max_brightness = max_brightness
+        self.led_count = led_count
+        self.alarm_regions = {
+            #"test": [
+            #    datetime(2020, 10, 30, 2, 0, 0),
+            #    datetime(2020, 10, 30, 5, 0, 0)
+            #]
+        }
          
     def set_max_brightness(self, new_max_brightness):
-         self.max_brightness = new_max_brightness
-         self.tick()
+        self.max_brightness = new_max_brightness
+        self.tick()
          
     def put_alarm_region(self, key, datetime_start, datetime_end):
-        self.alarm_regions[key] = [datetime_start, datetime_end]
+        if datetime_start < datetime_end:
+            self.alarm_regions[key] = [datetime_start, datetime_end]
+        else:
+            print(f"Cannot put alarm region for key \"{key}\": start is after end. start = {datetime_start}; end = {datetime_end}.")
          
-         
+    def remove_alarm_region(self, key):
+        del self.alarm_regions[key]
+    
     def _get_duty_cycle_for_ratio(self, led_index, time_ratio):
         
         led_ratio = led_index / self.led_count
@@ -92,30 +97,45 @@ class NeopixelRingClock:
             red = self._get_duty_cycle_for_ratio(led_index_to_compute, hour_ratio)
             blue = self._get_duty_cycle_for_ratio(led_index_to_compute, minute_ratio)
             
-            
-            for array_of_datetimes in self.alarm_regions.values():
+            green = 0
+            for key, array_of_datetimes in self.alarm_regions.items():
                 region_start_datetime = array_of_datetimes[0]
                 region_end_datetime = array_of_datetimes[1]
                 
-                #if region_end_datetime > region_start_datetime:
+                if region_start_datetime > region_end_datetime:
+                    print(f"Malformed alarm region for key \"{key}\": start is after end. start = {region_start_datetime}; end = {region_end_datetime}.")
+                    continue
                 
                 region_start_hour_ratio, not_used, not_used = self._get_ratios_for_datetime(region_start_datetime)
                 region_end_hour_ratio, not_used, not_used = self._get_ratios_for_datetime(region_end_datetime)
                 led_ratio = led_index_to_compute / self.led_count
                 
-                alarm_start_is_pm = region_start_datetime.hour > 11
-                if now_is_pm == alarm_start_is_pm:
-                    
-                    if led_ratio < region_start_hour_ratio:
-                        green = self._get_duty_cycle_for_ratio(led_index_to_compute, region_start_hour_ratio)
-                    elif region_start_hour_ratio <= led_ratio <= region_end_hour_ratio:
+                region_start_is_pm = region_start_datetime.hour > 11
+                region_end_is_pm = region_end_datetime.hour > 11
+                
+               
+                if led_ratio <= region_end_hour_ratio and region_start_is_pm != now_is_pm:
+                    # The region started in the previous halfday, and ends this halfday.
+                    # We need to show the rest of it.
+                    green = self.max_brightness
+                
+                elif led_ratio >= region_start_hour_ratio:
+                    # we definitley need to start. But when do we stop?
+                    if region_end_is_pm == now_is_pm:
+                        # The alarm ends this halfday. 
+                        if led_ratio <= region_end_hour_ratio:
+                            # We are inside the region.
+                            green = self.max_brightness
+                        else:
+                            # We have passed the end of the region.
+                            green = 0
+                    else :
+                        # The alarm ends the next halfday.
+                        # Shade all the rest of the LEDs
                         green = self.max_brightness
-                    elif led_ratio > region_end_hour_ratio:
-                         green = self._get_duty_cycle_for_ratio(led_index_to_compute, region_end_hour_ratio)
-                    else:
-                        green = 0
-                    
                 else:
+                    # The alarm does not happen this halfday.
                     green = 0
+               
             
             self.neopixels[led_index_to_set] = (red, green, blue)
