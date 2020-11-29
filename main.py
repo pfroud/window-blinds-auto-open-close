@@ -14,6 +14,20 @@ import board
 # See https://strftime.org/
 DATETIME_FORMAT_STRING = "%A %d %B %Y, %I:%M:%S %p"
 
+def timedelta_split(td):
+    # Apparently timedelta doesn't have a string formatting function, we need to DIY it
+    split = str(td).split(":")
+    hours = int(split[0])
+    minutes = int(split[1])
+    seconds = round(float(split[2]))
+    if seconds == 60:
+        seconds = 0
+        minutes += 1
+    if minutes == 60:
+        minutes = 0
+        hours += 1
+    return hours, minutes, seconds
+
 def vertical_spacer(parent, height):
     guizero.Box(parent, height=str(height))
 
@@ -90,6 +104,10 @@ def main():
     guizero.Text(box_open_blinds_time, text=".", align="left")
     
     text_daily_alarm_status = guizero.Text(box_daily_alarm, text="Click the button below to set the daily alarm.")
+    vertical_spacer(box_daily_alarm, 10)
+    text_daily_alarm_status2 = guizero.Text(box_daily_alarm, text="Second line of status")
+    vertical_spacer(box_daily_alarm, 10)
+    text_daily_alarm_status3 = guizero.Text(box_daily_alarm, text="Third line of status")
     
     def set_daily_alarm():
             
@@ -120,7 +138,7 @@ def main():
             return
         
         minutes_before_sunrise = int(textbox_minutes_before_sunrise.value)
-        daily_alarm_close_datetime = sunrise_datetime - timedelta(minutes=minutes_before_sunrise)
+        daily_alarm_close_datetime = (sunrise_datetime - timedelta(minutes=minutes_before_sunrise)).astimezone()
         
         
         #################### when to open the blinds - get an absolute time from user
@@ -135,15 +153,22 @@ def main():
             daily_alarm_open_datetime = None
             return
         
-        if open_at_datetime_parsed <= daily_alarm_close_datetime:
+        daily_alarm_open_datetime = datetime.combine(date_to_get_sunrise_for, open_at_datetime_parsed.time()).astimezone()
+        
+        if daily_alarm_open_datetime <= daily_alarm_close_datetime:
             text_daily_alarm_status.text_color = "red"
-            text_daily_alarm_status.value = "Trying to set blinds to open before they close"
+            text_daily_alarm_status.value = "Trying to set blinds to open before they close:" + \
+                "\ndaily_alarm_open_datetime = " + daily_alarm_open_datetime.strftime(DATETIME_FORMAT_STRING) + \
+                "\ndaily_alarm_close_datetime = " + daily_alarm_close_datetime.strftime(DATETIME_FORMAT_STRING)
             daily_alarm_open_datetime = None
             return
         
-        daily_alarm_open_datetime = datetime.combine(date_to_get_sunrise_for, open_at_datetime_parsed.time()).astimezone()
+     
         
-        clock.put_alarm_region("one-time", daily_alarm_close_datetime, daily_alarm_open_datetime)
+        #clock.put_alarm_region("one-time", daily_alarm_close_datetime, daily_alarm_open_datetime)
+        
+        daily_alarm_close_datetime = dateparser.parse("in 5 seconds").astimezone()
+        daily_alarm_open_datetime = dateparser.parse("in 30 seconds").astimezone()
         
         text_daily_alarm_status.text_color = "black"
         text_daily_alarm_status.value = \
@@ -169,71 +194,78 @@ def main():
     textbox_one_time_alarm = guizero.TextBox(box_one_time_alarm_time, text="in 20 seconds", align="left", width=20)
     guizero.Text(box_one_time_alarm_time, text=".", align="left")
     
-    text_alarm_status = guizero.Text(box_one_time_alarm, text="Click the button below to set a one-time alarm.")
+    text_one_time_alarm_status = guizero.Text(box_one_time_alarm, text="Click the button below to set a one-time alarm.")
     
     def set_one_time_alarm():
-        parsed_datetime = dateparser.parse(textbox_one_time_alarm.value)
-        
+        parsed_datetime = dateparser.parse(textbox_one_time_alarm.value).astimezone()
+        now = datetime.now().astimezone()
         nonlocal one_time_alarm_open_datetime
         
         if parsed_datetime is None:
-            text_alarm_status.text_color = "red"
-            text_alarm_status.value = "Couldn't parse date from string"
+            text_one_time_alarm_status.text_color = "red"
+            text_one_time_alarm_status.value = "Couldn't parse date from string"
             one_time_alarm_open_datetime = None
             return
         
-        total_seconds = (parsed_datetime - datetime.now()).total_seconds()
+        total_seconds = (parsed_datetime - now).total_seconds()
         if total_seconds < 1:
-            text_alarm_status.text_color = "red"
-            text_alarm_status.value = "Can't set alarm to ring in the past"
+            text_one_time_alarm_status.text_color = "red"
+            text_one_time_alarm_status.value = "Can't set alarm to ring in the past"
             one_time_alarm_open_datetime = None
             return
             
         if total_seconds >= 60*60*24:
-            text_alarm_status.text_color = "red"
-            text_alarm_status.value = "Setting alarm to ring more than one day in the future is not supported"
+            text_one_time_alarm_status.text_color = "red"
+            text_one_time_alarm_status.value = "Setting alarm to ring more than one day in the future is not supported"
             one_time_alarm_open_datetime = None
             return
         
         one_time_alarm_open_datetime = parsed_datetime
         window_blinds.go_to_closed() #starts the blinds closing, returns immediately, does not block
-        clock.put_alarm_region("one-time", datetime.now(), one_time_alarm_open_datetime)
-        text_alarm_status.text_color = "black"
-        text_alarm_status.value = "Submitted"
+        clock.put_alarm_region("one-time", now, one_time_alarm_open_datetime)
+        text_one_time_alarm_status.text_color = "black"
+        text_one_time_alarm_status.value = "Submitted"
     
     guizero.PushButton(box_one_time_alarm, text="Set one-time alarm", command=set_one_time_alarm)    
     
     
     def tick():
-        now = datetime.now()
+        now = datetime.now().astimezone()
         
         nonlocal one_time_alarm_open_datetime
         nonlocal daily_alarm_close_datetime
         nonlocal daily_alarm_open_datetime
         
-        if daily_alarm_close_datetime is not None and daily_alarm_open_datetime is not None:
-            # TODO need to write this
-            pass
+        if daily_alarm_close_datetime is not None:
+            timedelta_to_daily_alarm_close = daily_alarm_close_datetime - now
+            total_seconds = timedelta_to_daily_alarm_close.total_seconds()
+            if total_seconds > 0:
+                hours, minutes, seconds = timedelta_split(timedelta_to_daily_alarm_close)
+                text_daily_alarm_status2.value = f"Blinds will close in {hours} hr {minutes} min {seconds} sec"
+            else:
+                text_daily_alarm_status2.value = f"Blinds closed at\n{now.strftime(DATETIME_FORMAT_STRING)}."
+                daily_alarm_close_datetime = None
+                window_blinds.go_to_closed()
+            
+        if daily_alarm_open_datetime is not None:
+            timedelta_to_daily_alarm_open = daily_alarm_open_datetime - now
+            total_seconds = timedelta_to_daily_alarm_open.total_seconds()
+            if total_seconds > 0:
+                hours, minutes, seconds = timedelta_split(timedelta_to_daily_alarm_open)
+                text_daily_alarm_status3.value = f"Blinds will open in {hours} hr {minutes} min {seconds} sec"
+            else:
+                text_daily_alarm_status3.value =  f"Blinds opened at\n{now.strftime(DATETIME_FORMAT_STRING)}."
+                daily_alarm_open_datetime = None
+                window_blinds.go_to_open()
         
         if one_time_alarm_open_datetime is not None:
             timedelta_to_one_time_alarm_open = one_time_alarm_open_datetime - now
             total_seconds = timedelta_to_one_time_alarm_open.total_seconds()
             if total_seconds > 0:
-                # Apparently timedelta doesn't have a string formatting function, we need to DIY it
-                split = str(timedelta_to_one_time_alarm_open).split(":")
-                hours = int(split[0])
-                minutes = int(split[1])
-                seconds = round(float(split[2]))
-                if seconds == 60:
-                    seconds = 0
-                    minutes += 1
-                if minutes == 60:
-                    minutes = 0
-                    hours += 1
-                
-                text_alarm_status.value = f"One-time alarm will ring in {hours} hr {minutes} min {seconds} sec"
+                hours, minutes, seconds = timedelta_split(timedelta_to_one_time_alarm_open)
+                text_one_time_alarm_status.value = f"One-time alarm will ring in {hours} hr {minutes} min {seconds} sec"
             else:
-                text_alarm_status.value = "One-time alarm rang at\n" + now.strftime(DATETIME_FORMAT_STRING) + "."
+                text_one_time_alarm_status.value = f"One-time alarm rang at\n{now.strftime(DATETIME_FORMAT_STRING)}."
                 one_time_alarm_open_datetime = None
                 clock.remove_alarm_region("one-time")
                 window_blinds.go_to_open()
@@ -243,6 +275,8 @@ def main():
         
     guizero_app.repeat(1000, tick)
     guizero_app.display() #blocks until the guizero window is closed
+    window_blinds.stop()
+    clock.all_off()
  
 
 if __name__ == '__main__':

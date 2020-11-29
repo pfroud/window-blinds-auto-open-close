@@ -8,7 +8,7 @@ class WindowBlinds:
         
         self.mpu = mpu6050(0x68)
     
-        self.accelerometer_Gs_closed = 5.0
+        self.accelerometer_Gs_closed = 6.0
         self.accelerometer_Gs_open = 9.7
         
         self.direction_device = gpiozero.DigitalOutputDevice(direction_pin)

@@ -138,3 +138,7 @@ class NeopixelRingClock:
                
             
             self.neopixels[led_index_to_set] = (red, green, blue)
+    
+    def all_off(self):
+          for i in range(0, self.led_count):
+            self.neopixels[i] = (0, 0, 0)
