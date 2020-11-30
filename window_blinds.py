@@ -60,4 +60,4 @@ class WindowBlinds:
         else:
             self.direction_device.value = 1 if is_difference_positive else 0
             self.pwm_device.value = 1
-            self.guizero_app.after(1000, self.go_to_accelerometer_Gs, [accelerometer_Gs_target, is_difference_positive]);
+            self.guizero_app.after(100, self.go_to_accelerometer_Gs, [accelerometer_Gs_target, is_difference_positive]);
