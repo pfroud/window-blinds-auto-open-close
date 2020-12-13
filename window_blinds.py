@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from mpu6050 import mpu6050
 import gpiozero
+import traceback
 
 
 class WindowBlinds:
@@ -40,7 +41,13 @@ class WindowBlinds:
 
     def go_to_accelerometer_Gs(self, accelerometer_Gs_target,
                                previous_is_difference_positive, debug_printouts=False):
-        accelerometer_Gs_present = self.get_accelerometer_z_Gs()
+        try:
+            accelerometer_Gs_present = self.get_accelerometer_z_Gs()
+        except OSError:
+            self.stop()
+            traceback.print_exc()
+            return
+
         accelerometer_Gs_difference = accelerometer_Gs_target - accelerometer_Gs_present
 
         is_difference_positive = accelerometer_Gs_difference > 0
