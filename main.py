@@ -108,7 +108,8 @@ def main():
     ########################################################################
     box_daily_alarm = guizero.Box(guizero_app, width="fill")
     box_daily_alarm.set_border(1, "#aaaaaa")
-    guizero.Text(box_daily_alarm, text="Daily alarm")
+    guizero.Text(box_daily_alarm, text="Daily alarm").tk.configure(
+        font=("Liberation Sans", 12, "bold"))
     vertical_spacer(box_daily_alarm, 10)
 
     # How long before sunrise to close the blinds
@@ -218,7 +219,8 @@ def main():
     #################################################################
     box_one_time_alarm = guizero.Box(guizero_app, width="fill")
     box_one_time_alarm.set_border(1, "#aaaaaa")
-    guizero.Text(box_one_time_alarm, text="One-time alarm")
+    guizero.Text(box_one_time_alarm,
+                 text="One-time alarm").tk.configure(font=("Liberation Sans", 12, "bold"))
     vertical_spacer(box_one_time_alarm, 10)
 
     box_one_time_alarm_time = guizero.Box(box_one_time_alarm)
