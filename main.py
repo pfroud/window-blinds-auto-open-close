@@ -116,7 +116,7 @@ def main():
     box_close_blinds_time = guizero.Box(box_daily_alarm)
     guizero.Text(box_close_blinds_time, text="Close blinds ", align="left")
     textbox_minutes_before_sunrise = guizero.TextBox(box_close_blinds_time,
-                                                     align="left", text="60")
+                                                     align="left", text="120")
     guizero.Text(box_close_blinds_time, text=" minutes before sunrise.",
                  align="left")
 
@@ -124,7 +124,7 @@ def main():
     box_open_blinds_time = guizero.Box(box_daily_alarm)
     guizero.Text(box_open_blinds_time, text="Open blinds at ", align="left")
     textbox_open_blinds_time = guizero.TextBox(box_open_blinds_time,
-                                               text="11 am", align="left")
+                                               text="10 am", align="left")
     guizero.Text(box_open_blinds_time, text=".", align="left")
 
     text_daily_alarm_status = guizero.Text(box_daily_alarm,
@@ -234,8 +234,8 @@ def main():
                                               text="Click the button below to set a one-time alarm.")
 
     def set_one_time_alarm():
-        datetime_parsed = dateparser.parse(textbox_one_time_alarm.value)
-        .astimezone()
+        datetime_parsed = dateparser.parse(textbox_one_time_alarm.value) \
+            .astimezone()
         datetime_now = datetime.now().astimezone()
         nonlocal datetime_one_time_alarm_open
 

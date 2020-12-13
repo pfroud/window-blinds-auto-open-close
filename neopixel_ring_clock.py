@@ -109,7 +109,7 @@ class NeopixelRingClock:
 
             if datetime_now.hour < 12:
                 # AM
-                datetime_halfday_start = datetime_start_of_day
+                datetime_halfday_start = datetime_start_of_today
                 datetime_halfday_end = datetime_noon_today
             else:
                 # PM
