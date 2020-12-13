@@ -80,7 +80,7 @@ def main():
 
     pin_neopixel = board.D18  # GPIO pin 18 == Raspberry Pi pin 12
     led_count = 35
-    maximum_duty_cycle = 10  # limit the led brightness
+    maximum_duty_cycle = 5  # limit the led brightness
     neopixel_ring_clock = NeopixelRingClock(pin_neopixel, led_count,
                                             maximum_duty_cycle)
     neopixel_ring_clock.update()
@@ -89,6 +89,20 @@ def main():
     datetime_daily_alarm_open = None
     datetime_one_time_alarm_open = None
 
+    vertical_spacer(guizero_app, 10)
+    box_brightness = guizero.Box(guizero_app, width="fill")
+    box_brightness.set_border(1, "#aaaaaa")
+    guizero.Text(box_brightness, text="LED brightness").tk.configure(
+        font=("Liberation Sans", 12, "bold"))
+
+    def handle_brightness_changed():
+        neopixel_ring_clock.max_brightness = int(slider_brightness.value)
+        neopixel_ring_clock.update()
+    slider_brightness = guizero.Slider(box_brightness, start=0, end=255,
+                                       command=handle_brightness_changed, width="fill")
+    slider_brightness.value = maximum_duty_cycle
+
+    vertical_spacer(guizero_app, 40)
     ########################################################################
     #################### Create GUI for daily alarm ########################
     ########################################################################
