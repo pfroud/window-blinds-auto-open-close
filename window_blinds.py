@@ -45,7 +45,7 @@ class WindowBlinds:
                                  previous_is_difference_from_target_positive,
                                  initial_datetime,
                                  initial_accelerometer_Gs,
-                                 debug_printouts=True):
+                                 debug_printouts=False):
         try:
             accelerometer_Gs_present = self.get_accelerometer_z_Gs()
         except OSError:
@@ -87,7 +87,13 @@ class WindowBlinds:
             self.stop()
         else:
             self.gpio_device_motor_direction.value = 1 if is_difference_from_target_positive else 0
-            self.gpio_device_motor_speed.value = 1
+            time_when_full_speed_starts_seconds = 1
+            maximum_speed = 1
+            if elapsed_seconds < time_when_full_speed_starts_seconds:
+                self.gpio_device_motor_speed.value = elapsed_seconds / \
+                    time_when_full_speed_starts_seconds
+            else:
+                self.gpio_device_motor_speed.value = 1
             self.guizero_app.after(
                 100, self.go_to_accelerometer_z_Gs, [
                     accelerometer_Gs_target, is_difference_from_target_positive, initial_datetime, initial_accelerometer_Gs])

@@ -70,7 +70,7 @@ def get_datetime_sunrise(date):
 
 def main():
     guizero_app = guizero.App(
-        title="Window blinds thing",
+        title="Window blinds automatic opener & closer",
         width=500,
         height=600)
     vertical_spacer(guizero_app, 10)
