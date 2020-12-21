@@ -72,7 +72,7 @@ def main():
     guizero_app = guizero.App(
         title="Window blinds automatic opener & closer",
         width=500,
-        height=600)
+        height=700)
     vertical_spacer(guizero_app, 10)
 
     pin_window_blinds_direction = 12  # GPIO pin 12 == Raspberry Pi pin 32
@@ -147,9 +147,8 @@ def main():
         datetime_now = datetime.now()
         date_today = datetime_now.date()
 
-        # when to close the blinds - get from sunrise API,
-        # then subtract a user-specified duration
-
+        # When to close the blinds - get from sunrise API,
+        # then subtract a user-specified duration.
         is_pm = datetime_now.hour > 11
         if is_pm:
             # Sunrise is always in the AM, so we want to schedule the
@@ -173,8 +172,7 @@ def main():
         datetime_daily_alarm_close = (datetime_sunrise -
                                       timedelta(minutes=minutes_before_sunrise)).astimezone()
 
-        # when to open the blinds - get an absolute time from user
-
+        # When to open the blinds - get an absolute time from user.
         datetime_parsed_open_at = dateparser.parse(
             textbox_open_blinds_time.value).astimezone()
 
@@ -212,7 +210,7 @@ def main():
             "\n\nThen open blinds at:\n" + \
             datetime_daily_alarm_open.strftime(DATETIME_FORMAT_STRING)
 
-    guizero.PushButton(box_daily_alarm, text="Set daily alarm",
+    guizero.PushButton(box_daily_alarm, text="Update daily alarm",
                        command=set_daily_alarm)
 
     vertical_spacer(guizero_app, 40)
@@ -266,7 +264,7 @@ def main():
 
         datetime_one_time_alarm_open = datetime_parsed
 
-        # starts the blinds closing, returns immediately, does not block
+        # Starts the blinds closing, returns immediately, does not block.
         window_blinds.go_to_closed()
 
         neopixel_ring_clock.put_alarm_region("one-time", datetime_now,
@@ -313,6 +311,7 @@ def main():
                     f"Blinds opened at\n{datetime_now.strftime(DATETIME_FORMAT_STRING)}."
                 datetime_daily_alarm_open = None
                 window_blinds.go_to_open()
+                set_daily_alarm()
 
         if datetime_one_time_alarm_open is not None:
             timedelta_to_one_time_alarm_open = \
@@ -330,6 +329,7 @@ def main():
 
         neopixel_ring_clock.update()
 
+    set_daily_alarm()
     guizero_app.repeat(1000, tick)
     guizero_app.display()  # blocks until the guizero window is closed
     window_blinds.stop()
@@ -338,6 +338,6 @@ def main():
 
 if __name__ == '__main__':
     if os.geteuid() != 0:
-        exit(__file__ + ": fatal: Need to run the script as root (use sudo) " +
+        exit(__file__ + ": Need to run the script as root (use sudo) " +
              "because using Neopixels accesses GPIO.")
     main()
