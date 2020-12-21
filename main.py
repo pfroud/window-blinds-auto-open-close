@@ -69,7 +69,10 @@ def get_datetime_sunrise(date):
 
 
 def main():
-    guizero_app = guizero.App(title="Window blinds thing")
+    guizero_app = guizero.App(
+        title="Window blinds thing",
+        width=500,
+        height=600)
     vertical_spacer(guizero_app, 10)
 
     pin_window_blinds_direction = 12  # GPIO pin 12 == Raspberry Pi pin 32

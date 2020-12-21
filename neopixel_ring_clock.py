@@ -36,7 +36,7 @@ class NeopixelRingClock:
         led_ratio = led_index / self.led_count
         led_distance = abs(led_ratio - time_ratio)
 
-        # Graph of LED duty cycle vs distance the LED is to the clock hand
+        # Graph of LED duty cycle vs distance between  LED to clock hand
         #
         #   max_brightness| \
         # d               |  \
