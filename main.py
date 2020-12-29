@@ -101,7 +101,7 @@ def main():
         text="Then, open the blinds at ",
         align="left")
     textbox_open_blinds_time = guizero.TextBox(box_open_blinds_time,
-                                               text="7:22:10 am", align="left")
+                                               text="11 AM", align="left")
     guizero.Text(box_open_blinds_time, text=".", align="left")
 
     text_daily_alarm_status = guizero.Text(box_daily_alarm,
@@ -280,7 +280,7 @@ def main():
                 text_daily_alarm_status2.value = \
                     f"Blinds will close in {hours} hr {minutes} min {seconds} sec"
             else:
-                print("which is leq zero, so I am closing the blinds")
+                #print("which is leq zero, so I am closing the blinds")
                 text_daily_alarm_status2.value = \
                     f"Blinds closed at\n{datetime_now.strftime(DATETIME_FORMAT_STRING)}."
                 datetime_daily_alarm_close = None
@@ -297,7 +297,7 @@ def main():
                 text_daily_alarm_status3.value = \
                     f"Blinds will open in {hours} hr {minutes} min {seconds} sec"
             else:
-                print("    which is leq zero, so I am opening the blinds")
+                #print("    which is leq zero, so I am opening the blinds")
                 text_daily_alarm_status3.value = \
                     f"Blinds opened at\n{datetime_now.strftime(DATETIME_FORMAT_STRING)}."
                 datetime_daily_alarm_open = None
