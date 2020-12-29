@@ -6,8 +6,11 @@ import requests
 import traceback
 import dateparser
 import board
+import suntime
 from datetime import datetime
 from datetime import timedelta
+from datetime import date
+from durations import Duration
 from neopixel_ring_clock import NeopixelRingClock
 from window_blinds import WindowBlinds
 
@@ -17,7 +20,8 @@ DATETIME_FORMAT_STRING = "%A %d %B %Y, %I:%M:%S %p"
 
 def timedelta_split(td):
     # Apparently timedelta doesn't have a string formatting function,
-    # we need to DIY it
+    # we need to DIY it.
+    # TODO support durations greater or equal to one day
     split = str(td).split(":")
     hours = int(split[0])
     minutes = int(split[1])
@@ -33,39 +37,6 @@ def timedelta_split(td):
 
 def vertical_spacer(parent, height):
     guizero.Box(parent, height=str(height))
-
-
-def get_datetime_sunrise(date):
-    # See https://sunrise-sunset.org/api/
-    url = "https://api.sunrise-sunset.org/json"
-    params = {
-        # coordinates for the City of Santa Clara, California
-        "lat": 37.354444,
-        "lng": -121.969167,
-
-        # When formatted==1, the response is in "HH:MM:SS AM" format.
-        # When formatted==0, the response is in ISO 8601 format with times
-        # in UTC, which is "YYYY-MM-DDTHH:MM:SS+00:00".
-        "formatted": 0,
-        "date": date.isoformat()
-    }
-
-    try:
-        response = requests.get(url, params=params).json()
-    except requests.exceptions.RequestException as e:
-        traceback.print_exc()
-        return None
-
-    if response["status"] == "OK":
-        sunrise_string = response["results"]["sunrise"]
-        # The returned time is in UTC, so we need to add timezone information
-        return datetime.fromisoformat(sunrise_string).astimezone()
-    else:
-        print(
-            "sunrise-sunset.org API call failed, response status is ",
-            response["status"]
-        )
-        return None
 
 
 def main():
@@ -115,19 +86,22 @@ def main():
         font=("Liberation Sans", 12, "bold"))
     vertical_spacer(box_daily_alarm, 10)
 
-    # How long before sunrise to close the blinds
+    # Duration before sunrise to close the blinds
     box_close_blinds_time = guizero.Box(box_daily_alarm)
-    guizero.Text(box_close_blinds_time, text="Close blinds ", align="left")
-    textbox_minutes_before_sunrise = guizero.TextBox(box_close_blinds_time,
-                                                     align="left", text="120")
-    guizero.Text(box_close_blinds_time, text=" minutes before sunrise.",
+    guizero.Text(box_close_blinds_time, text="Close the blinds ", align="left")
+    textbox_duration_before_sunrise = guizero.TextBox(box_close_blinds_time,
+                                                      align="left", text="1 hour")
+    guizero.Text(box_close_blinds_time, text=" before sunrise.",
                  align="left")
 
     # What time to open the blinds afterwards
     box_open_blinds_time = guizero.Box(box_daily_alarm)
-    guizero.Text(box_open_blinds_time, text="Open blinds at ", align="left")
+    guizero.Text(
+        box_open_blinds_time,
+        text="Then, open the blinds at ",
+        align="left")
     textbox_open_blinds_time = guizero.TextBox(box_open_blinds_time,
-                                               text="10 am", align="left")
+                                               text="7:22:10 am", align="left")
     guizero.Text(box_open_blinds_time, text=".", align="left")
 
     text_daily_alarm_status = guizero.Text(box_daily_alarm,
@@ -139,38 +113,51 @@ def main():
     text_daily_alarm_status3 = guizero.Text(box_daily_alarm,
                                             text="Third line of status")
 
-    def set_daily_alarm():
-
+    def set_daily_alarm(for_date=None):
         # Close the blinds a user-specified amount of time before sunrise.
         # Open the blinds at a user specified absolute time.
 
-        datetime_now = datetime.now()
-        date_today = datetime_now.date()
+        # Coordinates for the City of Santa Clara, California
+        sun = suntime.Sun(37.354444, -121.969167)
 
-        # When to close the blinds - get from sunrise API,
-        # then subtract a user-specified duration.
-        is_pm = datetime_now.hour > 11
-        if is_pm:
-            # Sunrise is always in the AM, so we want to schedule the
-            # alarm for tomorrow
-            date_to_get_sunrise_for = date_today + timedelta(days=1)
+        if for_date is None:
+            # If the date to get the sunrise for isn't speficied,
+            # schedule the blinds to open for the next future sunrise.
+            datetime_now = datetime.now().astimezone()
+            date_today = datetime_now.date()
+            is_pm = datetime_now.hour > 11
+            if is_pm:
+                # Sunrise is always in the AM. If the current time is PM,
+                # schedule the blinds to open for tomorrow's sunrise.
+                date_tomorrow = date_today + timedelta(days=1)
+                datetime_sunrise = sun.get_sunrise_time(
+                    date_tomorrow).astimezone()
+
+            else:
+                # Check if sunrise already happened
+                datetime_sunrise_today = sun.get_sunrise_time(
+                    date_today).astimezone()
+
+                if datetime_sunrise_today <= datetime_now:
+                    # Sunrise already happened today. Schedule the blinds
+                    # to open for tomorrow's sunrise.
+                    date_tomorrow = date_today + timedelta(days=1)
+                    datetime_sunrise = sun.get_sunrise_time(
+                        date_tomorrow).astimezone()
+                else:
+                    # sunrise is in the future today
+                    datetime_sunrise = datetime_sunrise_today
+
         else:
-            # We want to schedule the alarm for today
-            date_to_get_sunrise_for = date_today
+            # Use the date given in the keywork argument.
+            datetime_sunrise = sun.get_sunrise_time(for_date).astimezone()
 
         nonlocal datetime_daily_alarm_close
 
-        # TODO find way to not hang GUI when this is running
-        datetime_sunrise = get_datetime_sunrise(date_to_get_sunrise_for)
-        if datetime_sunrise is None:
-            text_daily_alarm_status.text_color = "red"
-            text_daily_alarm_status.value = "Couldn't get sunrise datetime"
-            datetime_daily_alarm_close = None
-            return
-
-        minutes_before_sunrise = int(textbox_minutes_before_sunrise.value)
+        seconds_before_sunrise = Duration(
+            textbox_duration_before_sunrise.value).to_seconds()
         datetime_daily_alarm_close = (datetime_sunrise -
-                                      timedelta(minutes=minutes_before_sunrise)).astimezone()
+                                      timedelta(seconds=seconds_before_sunrise)).astimezone()
 
         # When to open the blinds - get an absolute time from user.
         datetime_parsed_open_at = dateparser.parse(
@@ -184,7 +171,7 @@ def main():
             datetime_daily_alarm_open = None
             return
 
-        datetime_daily_alarm_open = datetime.combine(date_to_get_sunrise_for,
+        datetime_daily_alarm_open = datetime.combine(datetime_sunrise.date(),
                                                      datetime_parsed_open_at.time()).astimezone()
 
         if datetime_daily_alarm_open <= datetime_daily_alarm_close:
@@ -286,12 +273,14 @@ def main():
             timedelta_to_daily_alarm_close = \
                 datetime_daily_alarm_close - datetime_now
             total_seconds = timedelta_to_daily_alarm_close.total_seconds()
+            #print(f"total_seconds until daily alarm close: {total_seconds}")
             if total_seconds > 0:
                 hours, minutes, seconds = \
                     timedelta_split(timedelta_to_daily_alarm_close)
                 text_daily_alarm_status2.value = \
                     f"Blinds will close in {hours} hr {minutes} min {seconds} sec"
             else:
+                print("which is leq zero, so I am closing the blinds")
                 text_daily_alarm_status2.value = \
                     f"Blinds closed at\n{datetime_now.strftime(DATETIME_FORMAT_STRING)}."
                 datetime_daily_alarm_close = None
@@ -301,17 +290,20 @@ def main():
             timedelta_to_daily_alarm_open = \
                 datetime_daily_alarm_open - datetime_now
             total_seconds = timedelta_to_daily_alarm_open.total_seconds()
+            #print(f"total_seconds until daily alarm open:  {total_seconds}")
             if total_seconds > 0:
                 hours, minutes, seconds = \
                     timedelta_split(timedelta_to_daily_alarm_open)
                 text_daily_alarm_status3.value = \
                     f"Blinds will open in {hours} hr {minutes} min {seconds} sec"
             else:
+                print("    which is leq zero, so I am opening the blinds")
                 text_daily_alarm_status3.value = \
                     f"Blinds opened at\n{datetime_now.strftime(DATETIME_FORMAT_STRING)}."
                 datetime_daily_alarm_open = None
                 window_blinds.go_to_open()
-                set_daily_alarm()
+                date_tomorrow = date.today() + timedelta(days=1)
+                set_daily_alarm(date_tomorrow)
 
         if datetime_one_time_alarm_open is not None:
             timedelta_to_one_time_alarm_open = \

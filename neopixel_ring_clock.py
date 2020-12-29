@@ -9,6 +9,7 @@ DATETIME_FORMAT_STRING = "%A %d %B %Y, %I:%M:%S %p"
 
 class NeopixelRingClock:
     def __init__(self, pin, led_count, max_brightness):
+        # TODO set auto_write=False and call show() after updating all leds
         self.neopixels = NeoPixel(pin, led_count)
         self.max_brightness = max_brightness
         self.led_count = led_count
@@ -25,9 +26,6 @@ class NeopixelRingClock:
         else:
             print(f"{__file__}: Cannot put alarm region for key \"{key}\": start is after end. start = {datetime_start}; end = {datetime_end}.")
 
-        # reject if the difference is more than 12 hours, to prevent an entire
-        # halfday being green
-
     def remove_alarm_region(self, key):
         del self.alarm_regions[key]
 
@@ -36,7 +34,7 @@ class NeopixelRingClock:
         led_ratio = led_index / self.led_count
         led_distance = abs(led_ratio - time_ratio)
 
-        # Graph of LED duty cycle vs distance between  LED to clock hand
+        # Chart of LED duty cycle vs distance between LED to clock hand
         #
         #   max_brightness| \
         # d               |  \
