@@ -9,9 +9,9 @@ This device automatically closes window blinds before sunrise, then opens the wi
 ## Screenshot
 
 <p align="center">
-    !-- use HTML to center the image -->
+    <!-- use HTML to center the image -->
     <img alt="screenshot of python program" src="screenshot.png">
-<p/>
+</p>
 
 ## How it works
 
