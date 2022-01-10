@@ -6,6 +6,10 @@ I want to block harsh reflected sunlight in the early mornings, but I also want 
 
 This device automatically closes window blinds before sunrise, then opens the window blinds at a time specified by the user.
 
+## Screenshot
+
+![](screenshot.png)
+
 ## How it works
 
 ### But first, some window blinds terminology
