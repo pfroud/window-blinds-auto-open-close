@@ -11,14 +11,14 @@ class WindowBlinds:
 
         self.accelerometer = mpu6050(0x68)
 
+        self.use_soft_start = False
+
         # The way my accereometer is oriented:
         #  9.8 Gs on Z axis -->     slat is flat --> blinds open
         # zero Gs on Z axis --> slat is vertical --> blinds closed
         self.accelerometer_z_Gs_blinds_closed = 5.5
         self.accelerometer_z_Gs_blinds_open = 9.7
 
-        #self.gpio_device_motor_direction = gpiozero.DigitalOutputDevice(
-        #    direction_pin)
         self.gpio_device_H_bridge_pin_1 = gpiozero.DigitalOutputDevice(
             h_bridge_pin_1)
         self.gpio_device_H_bridge_pin_2 = gpiozero.DigitalOutputDevice(
@@ -49,7 +49,7 @@ class WindowBlinds:
                                  previous_is_difference_from_target_positive,
                                  initial_datetime,
                                  initial_accelerometer_Gs,
-                                 debug_printouts=False):
+                                 debug_printouts=True):
         try:
             accelerometer_Gs_present = self.get_accelerometer_z_Gs()
         except OSError:
@@ -62,7 +62,7 @@ class WindowBlinds:
         accel_difference_from_initial = initial_accelerometer_Gs - accelerometer_Gs_present
         # Adjust these threshholds through experimentation for how much
         # backlash the window blinds have, and how noisy the acceleroemter is
-        if abs(accel_difference_from_initial) < 0.7 and elapsed_seconds > 8:
+        if abs(accel_difference_from_initial) < 0.7 and elapsed_seconds > 12:
             self.stop()
             print("Stopping because the accelerometer hasn't moved enough,")
             print("probably forgot to turn on power supply for motor")
@@ -90,23 +90,24 @@ class WindowBlinds:
         if crossed_zero or is_close_enough:
             self.stop()
         else:
-            #self.gpio_device_motor_direction.value = 1 if is_difference_from_target_positive else 0
-            
             if is_difference_from_target_positive:
-                self.gpio_device_H_bridge_pin_1.value = 1;
-                self.gpio_device_H_bridge_pin_2.value = 0;
+                self.gpio_device_H_bridge_pin_1.value = 1
+                self.gpio_device_H_bridge_pin_2.value = 0
             else:
-                self.gpio_device_H_bridge_pin_1.value = 0;
-                self.gpio_device_H_bridge_pin_2.value = 1;
-                
-            
-            time_when_full_speed_starts_seconds = 1
-            maximum_speed = 1
-            if elapsed_seconds < time_when_full_speed_starts_seconds:
-                self.gpio_device_motor_speed.value = elapsed_seconds / \
-                    time_when_full_speed_starts_seconds
+                self.gpio_device_H_bridge_pin_1.value = 0
+                self.gpio_device_H_bridge_pin_2.value = 1
+
+            if(self.use_soft_start):
+                time_when_full_speed_starts_seconds = 1
+                maximum_speed = 1
+                if elapsed_seconds < time_when_full_speed_starts_seconds:
+                    self.gpio_device_motor_speed.value = elapsed_seconds / \
+                        time_when_full_speed_starts_seconds
+                else:
+                    self.gpio_device_motor_speed.value = 1
             else:
                 self.gpio_device_motor_speed.value = 1
+
             self.guizero_app.after(
                 100, self.go_to_accelerometer_z_Gs, [
                     accelerometer_Gs_target, is_difference_from_target_positive, initial_datetime, initial_accelerometer_Gs])
