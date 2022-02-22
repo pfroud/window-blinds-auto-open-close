@@ -46,10 +46,12 @@ def main():
         height=700)
     vertical_spacer(guizero_app, 10)
 
-    pin_window_blinds_direction = 12  # GPIO pin 12 == Raspberry Pi pin 32
+    #pin_window_blinds_direction = 12  # GPIO pin 12 == Raspberry Pi pin 32
+    pin_window_blinds_H_bridge_pin_1 = 13 # GPIO pin 13 == Raspberry Pi pin 33
+    pin_window_blinds_H_bridge_pin_2 = 6 # GPIO pin 6 == Raspberry Pi pin 31
     pin_window_blinds_pwm = 16  # GPIO pin 16 == Raspberry Pi pin 36
     window_blinds = WindowBlinds(
-        guizero_app, pin_window_blinds_direction,
+        guizero_app, pin_window_blinds_H_bridge_pin_1, pin_window_blinds_H_bridge_pin_2,
         pin_window_blinds_pwm)
 
     pin_neopixel = board.D18  # GPIO pin 18 == Raspberry Pi pin 12

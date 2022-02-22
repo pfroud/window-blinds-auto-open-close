@@ -6,7 +6,7 @@ import traceback
 
 
 class WindowBlinds:
-    def __init__(self, guizero_app, direction_pin, pwm_pin):
+    def __init__(self, guizero_app, h_bridge_pin_1, h_bridge_pin_2, pwm_pin):
         self.guizero_app = guizero_app
 
         self.accelerometer = mpu6050(0x68)
@@ -17,8 +17,12 @@ class WindowBlinds:
         self.accelerometer_z_Gs_blinds_closed = 5.5
         self.accelerometer_z_Gs_blinds_open = 9.7
 
-        self.gpio_device_motor_direction = gpiozero.DigitalOutputDevice(
-            direction_pin)
+        #self.gpio_device_motor_direction = gpiozero.DigitalOutputDevice(
+        #    direction_pin)
+        self.gpio_device_H_bridge_pin_1 = gpiozero.DigitalOutputDevice(
+            h_bridge_pin_1)
+        self.gpio_device_H_bridge_pin_2 = gpiozero.DigitalOutputDevice(
+            h_bridge_pin_2)
         self.gpio_device_motor_speed = gpiozero.PWMOutputDevice(
             pwm_pin, initial_value=0, frequency=20_000)
 
@@ -86,7 +90,16 @@ class WindowBlinds:
         if crossed_zero or is_close_enough:
             self.stop()
         else:
-            self.gpio_device_motor_direction.value = 1 if is_difference_from_target_positive else 0
+            #self.gpio_device_motor_direction.value = 1 if is_difference_from_target_positive else 0
+            
+            if is_difference_from_target_positive:
+                self.gpio_device_H_bridge_pin_1.value = 1;
+                self.gpio_device_H_bridge_pin_2.value = 0;
+            else:
+                self.gpio_device_H_bridge_pin_1.value = 0;
+                self.gpio_device_H_bridge_pin_2.value = 1;
+                
+            
             time_when_full_speed_starts_seconds = 1
             maximum_speed = 1
             if elapsed_seconds < time_when_full_speed_starts_seconds:
