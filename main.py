@@ -330,7 +330,7 @@ def main():
 
 
 if __name__ == '__main__':
-    if os.geteuid() != 0:
-        exit(__file__ + ": Need to run the script as root (use sudo) " +
-             "because using Neopixels accesses GPIO.")
-    main()
+    if os.geteuid() == 0:
+        main()
+    else:
+        exit(__file__ + ": Need to run the script as root (use sudo) to access GPIO.")
