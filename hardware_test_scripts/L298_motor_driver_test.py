@@ -1,8 +1,9 @@
 import gpiozero
 import os
+import time
 
 def main():
-    h_bridge_pin_1 =   # GPIO pin 13 == Raspberry Pi pin 33
+    h_bridge_pin_1 = 13  # GPIO pin 13 == Raspberry Pi pin 33
     h_bridge_pin_2 = 6  # GPIO pin 6 == Raspberry Pi pin 31
     pwm_pin = 16  # GPIO pin 16 == Raspberry Pi pin 36
     
@@ -13,6 +14,9 @@ def main():
     gpio_device_H_bridge_pin_1.value = 1
     gpio_device_H_bridge_pin_2.value = 0
     gpio_device_motor_speed.value = 1
+
+    # All gpiozero outputs stop when the program exits
+    time.sleep(1)
     
     
 if __name__ == '__main__':
