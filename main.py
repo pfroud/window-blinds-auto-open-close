@@ -53,7 +53,7 @@ def main():
         guizero_app, pin_window_blinds_H_bridge_pin_1, pin_window_blinds_H_bridge_pin_2,
         pin_window_blinds_pwm)
 
-    pin_neopixel = board.D18  # GPIO pin 18 == Raspberry Pi pin 12
+    pin_neopixel = board.D21  # GPIO pin 21 == Raspberry Pi pin 40
     led_count = 35
     maximum_duty_cycle = 5  # limit the led brightness
     neopixel_ring_clock = NeopixelRingClock(pin_neopixel, led_count,
