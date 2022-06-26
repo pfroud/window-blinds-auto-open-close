@@ -9,12 +9,15 @@ DATETIME_FORMAT_STRING = "%A %d %B %Y, %I:%M:%S %p"
 
 class NeopixelRingClock:
     def __init__(self, pin, led_count, max_brightness):
-        # TODO set auto_write=False and call show() after updating all leds
-        self.neopixels = NeoPixel(pin, led_count)
+        self.neopixels = NeoPixel(pin, led_count, auto_write=False)
         self.max_brightness = max_brightness
         self.led_count = led_count
         self.alarm_regions = {}
         self.debug_printouts = False
+        self.do_override_datetime = False
+        self.datetime_override = None
+        self.show_hour = True
+        self.show_minute = True
 
     def set_max_brightness(self, new_max_brightness):
         self.max_brightness = new_max_brightness
@@ -73,7 +76,10 @@ class NeopixelRingClock:
         return hour_ratio, minute_ratio, second_ratio
 
     def update(self):
-        datetime_now = datetime.now().astimezone()
+        if self.do_override_datetime:
+            datetime_now = self.datetime_override
+        else:
+            datetime_now = datetime.now().astimezone()
 
         ratio_hour, ratio_minute, ratio_second = self._get_ratios_for_datetime(
             datetime_now)
@@ -94,10 +100,17 @@ class NeopixelRingClock:
                 led_index_to_compute = i
                 led_index_to_set = i
 
-            red = self._get_led_duty_cycle_for_time_ratio(
-                led_index_to_compute, ratio_hour)
-            blue = self._get_led_duty_cycle_for_time_ratio(
-                led_index_to_compute, ratio_minute)
+            if self.show_hour:
+                red = self._get_led_duty_cycle_for_time_ratio(
+                    led_index_to_compute, ratio_hour)
+            else:
+                red = 0
+
+            if self.show_minute:
+                blue = self._get_led_duty_cycle_for_time_ratio(
+                    led_index_to_compute, ratio_minute)
+            else:
+                blue = 0
 
             is_led_inside_any_region = False
             datetime_start_of_today = datetime_now.replace(hour=0, minute=0)
@@ -152,7 +165,20 @@ class NeopixelRingClock:
 
             green = self.max_brightness if is_led_inside_any_region else 0
             self.neopixels[led_index_to_set] = (red, green, blue)
+        self.neopixels.show()
 
     def all_off(self):
         for i in range(0, self.led_count):
             self.neopixels[i] = (0, 0, 0)
+        self.neopixels.show()
+
+    def override_time(self, hour, minute, second):
+        self.do_override_datetime = True
+        self.datetime_override = datetime.now().astimezone().replace(
+            hour=hour, minute=minute, second=second)
+
+    def set_show_hour(self, show_hour):
+        self.show_hour = show_hour
+
+    def set_show_minute(self, show_minute):
+        self.show_minute = show_minute
