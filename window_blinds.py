@@ -49,7 +49,7 @@ class WindowBlinds:
                                  previous_is_difference_from_target_positive,
                                  initial_datetime,
                                  initial_accelerometer_Gs,
-                                 debug_printouts=True):
+                                 debug_printouts=False):
         try:
             accelerometer_Gs_present = self.get_accelerometer_z_Gs()
         except OSError:
