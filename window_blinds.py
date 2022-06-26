@@ -14,15 +14,17 @@ class WindowBlinds:
         self.use_soft_start = False
 
         # The way my accereometer is oriented:
-        #  9.8 Gs on Z axis -->     slat is flat --> blinds open
-        # zero Gs on Z axis --> slat is vertical --> blinds closed
-        self.accelerometer_z_Gs_blinds_closed = 5.5
-        self.accelerometer_z_Gs_blinds_open = 9.7
+        #  9.8 m/s on Z axis -->     slat is flat --> blinds open
+        # zero m/s on Z axis --> slat is vertical --> blinds closed
+        self.accelerometer_Z_meters_per_second_blinds_closed = 5.5
+        self.accelerometer_Z_meters_per_second_blinds_open = 9.7
 
         self.gpio_device_H_bridge_pin_1 = gpiozero.DigitalOutputDevice(
             h_bridge_pin_1)
+
         self.gpio_device_H_bridge_pin_2 = gpiozero.DigitalOutputDevice(
             h_bridge_pin_2)
+
         self.gpio_device_motor_speed = gpiozero.PWMOutputDevice(
             pwm_pin, initial_value=0, frequency=20_000)
 
@@ -30,28 +32,29 @@ class WindowBlinds:
         self.gpio_device_motor_speed.off()
 
     def go_to_open(self):
-        self.go_to_accelerometer_z_Gs_start(
-            self.accelerometer_z_Gs_blinds_open)
+        self.go_to_accelerometer_Z_meters_per_second_start(
+            self.accelerometer_Z_meters_per_second_blinds_open)
 
     def go_to_closed(self):
-        self.go_to_accelerometer_z_Gs_start(
-            self.accelerometer_z_Gs_blinds_closed)
+        self.go_to_accelerometer_Z_meters_per_second_start(
+            self.accelerometer_Z_meters_per_second_blinds_closed)
 
-    def get_accelerometer_z_Gs(self):
+    def get_accelerometer_Z_meters_per_second(self):
         return self.accelerometer.get_accel_data()["z"]
 
-    def go_to_accelerometer_z_Gs_start(self, accelerometer_z_Gs_target):
-        self.go_to_accelerometer_z_Gs(accelerometer_z_Gs_target,
-                                      None, datetime.now(), self.get_accelerometer_z_Gs())
+    def go_to_accelerometer_Z_meters_per_second_start(
+            self, accelerometer_Z_meters_per_second_target):
+        self.go_to_accelerometer_Z_meters_per_second(accelerometer_Z_meters_per_second_target,
+                                                     None, datetime.now(), self.get_accelerometer_Z_meters_per_second())
 
-    def go_to_accelerometer_z_Gs(self,
-                                 accelerometer_Gs_target,
-                                 previous_is_difference_from_target_positive,
-                                 initial_datetime,
-                                 initial_accelerometer_Gs,
-                                 debug_printouts=False):
+    def go_to_accelerometer_Z_meters_per_second(self,
+                                                accelerometer_meters_per_second_target,
+                                                previous_is_difference_from_target_positive,
+                                                initial_datetime,
+                                                initial_accelerometer_meters_per_second,
+                                                debug_printouts=False):
         try:
-            accelerometer_Gs_present = self.get_accelerometer_z_Gs()
+            accelerometer_meters_per_second_present = self.get_accelerometer_Z_meters_per_second()
         except OSError:
             # Stop the motor if can't communicate with accelerometer via I2C.
             self.stop()
@@ -59,7 +62,10 @@ class WindowBlinds:
             return
 
         elapsed_seconds = (datetime.now() - initial_datetime).total_seconds()
-        accel_difference_from_initial = initial_accelerometer_Gs - accelerometer_Gs_present
+
+        accel_difference_from_initial = initial_accelerometer_meters_per_second - \
+            accelerometer_meters_per_second_present
+
         # Adjust these threshholds through experimentation for how much
         # backlash the window blinds have, and how noisy the acceleroemter is
         if abs(accel_difference_from_initial) < 0.7 and elapsed_seconds > 12:
@@ -68,22 +74,26 @@ class WindowBlinds:
             print("probably forgot to turn on power supply for motor")
             return
 
-        accelerometer_Gs_difference_from_target = accelerometer_Gs_target - \
-            accelerometer_Gs_present
-        is_difference_from_target_positive = accelerometer_Gs_difference_from_target > 0
+        accelerometer_meters_per_second_difference_from_target = accelerometer_meters_per_second_target - \
+            accelerometer_meters_per_second_present
+
+        is_difference_from_target_positive = accelerometer_meters_per_second_difference_from_target > 0
+
         crossed_zero = previous_is_difference_from_target_positive is not None \
             and previous_is_difference_from_target_positive != is_difference_from_target_positive
 
-        is_close_enough = abs(accelerometer_Gs_difference_from_target) < 0.05
+        is_close_enough = abs(
+            accelerometer_meters_per_second_difference_from_target) < 0.05
 
         if debug_printouts:
             print()
-            print(f"Accel present = {accelerometer_Gs_present:5.2f} G's")
+            print(
+                f"Accel present = {accelerometer_meters_per_second_present:5.2f} m/s")
             print(f" Elapsed time = {elapsed_seconds:5.2f} seconds")
             print(
-                f"Accel initial = {initial_accelerometer_Gs:5.2f} G's    Difference from present = {accel_difference_from_initial:5.2f} G's")
+                f"Accel initial = {initial_accelerometer_meters_per_second:5.2f} m/s    Difference from present = {accel_difference_from_initial:5.2f} m/s")
             print(
-                f" Accel target = { accelerometer_Gs_target:5.2f} G's    Difference from present = {accelerometer_Gs_difference_from_target:5.2f} G's")
+                f" Accel target = { accelerometer_meters_per_second_target:5.2f} m/s    Difference from present = {accelerometer_meters_per_second_difference_from_target:5.2f} m/s")
             print(f"crossed zero? " + str(crossed_zero))
             print(f"close enough? " + str(is_close_enough))
 
@@ -109,5 +119,5 @@ class WindowBlinds:
                 self.gpio_device_motor_speed.value = 1
 
             self.guizero_app.after(
-                100, self.go_to_accelerometer_z_Gs, [
-                    accelerometer_Gs_target, is_difference_from_target_positive, initial_datetime, initial_accelerometer_Gs])
+                100, self.go_to_accelerometer_Z_meters_per_second, [
+                    accelerometer_meters_per_second_target, is_difference_from_target_positive, initial_datetime, initial_accelerometer_meters_per_second])
