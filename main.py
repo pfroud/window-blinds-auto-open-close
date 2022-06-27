@@ -43,7 +43,7 @@ def main():
     guizero_app = guizero.App(
         title="Window blinds automatic opener & closer",
         width=500,
-        height=700)
+        height=800)
     vertical_spacer(guizero_app, 10)
 
     pin_window_blinds_H_bridge_pin_1 = 13  # GPIO pin 13 == Raspberry Pi pin 33
@@ -200,6 +200,20 @@ def main():
 
     guizero.PushButton(box_daily_alarm, text="Update daily alarm",
                        command=set_daily_alarm)
+
+    vertical_spacer(guizero_app, 40)
+
+    box_move_now = guizero.Box(guizero_app)
+    guizero.PushButton(
+        box_move_now,
+        text="Open blinds now",
+        align="left",
+        command=window_blinds.go_to_open)
+    guizero.PushButton(
+        box_move_now,
+        text="Close blinds now",
+        align="left",
+        command=window_blinds.go_to_closed)
 
     vertical_spacer(guizero_app, 40)
 
