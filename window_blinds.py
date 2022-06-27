@@ -13,7 +13,7 @@ class WindowBlinds:
         # When the AD0 pin is high, the I2C address is 0x69.
         self.accelerometer = mpu6050(0x68)
 
-        self.use_soft_start = False
+        self.use_soft_start = True
 
         #  9.8 m/s on the Z axis means the accelerometer is flat.
         # Zero m/s on the Z axis means the accelerometer is vertical.
@@ -31,7 +31,7 @@ class WindowBlinds:
             h_bridge_pin_2)
 
         self.gpio_device_motor_speed = gpiozero.PWMOutputDevice(
-            pwm_pin, initial_value=0, frequency=20_000)
+            pwm_pin, initial_value=0, frequency=500)
 
     def stop(self):
         self.gpio_device_motor_speed.off()
@@ -120,8 +120,7 @@ class WindowBlinds:
 
             # set motor speed
             if self.use_soft_start:
-                time_when_full_speed_starts_seconds = 1
-                maximum_speed = 1
+                time_when_full_speed_starts_seconds = 3
                 if elapsed_seconds < time_when_full_speed_starts_seconds:
                     self.gpio_device_motor_speed.value = elapsed_seconds / \
                         time_when_full_speed_starts_seconds
