@@ -206,22 +206,17 @@ def main():
     #################################################################
     ############# Create GUI to move the blinds immediately #########
     #################################################################
-    box_move_now = guizero.Box(guizero_app)
+    box_move_now = guizero.Box(guizero_app, width="fill")
     box_move_now.set_border(1, "#aaaaaa")
     guizero.Text(box_move_now, text="Move the blinds now").tk.configure(
         font=("Liberation Sans", 12, "bold"))
     vertical_spacer(box_daily_alarm, 10)
 
-    guizero.PushButton(
-        box_move_now,
-        text="Open blinds now",
-        align="left",
-        command=window_blinds.go_to_open)
-    guizero.PushButton(
-        box_move_now,
-        text="Close blinds now",
-        align="left",
-        command=window_blinds.go_to_closed)
+    box_move_now_content = guizero.Box(box_move_now)
+    guizero.PushButton(box_move_now_content, align="left", text="Open blinds now",
+                       command=window_blinds.go_to_open)
+    guizero.PushButton(box_move_now_content, align="left", text="Close blinds now",
+                       command=window_blinds.go_to_closed)
 
     vertical_spacer(guizero_app, 40)
 
