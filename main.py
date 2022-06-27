@@ -18,11 +18,11 @@ from window_blinds import WindowBlinds
 DATETIME_FORMAT_STRING = "%A %d %B %Y, %I:%M:%S %p"
 
 
-def timedelta_split(td):
+def timedelta_split(timedelta):
     # Apparently timedelta doesn't have a string formatting function,
     # we need to DIY it.
     # TODO support durations greater or equal to one day
-    split = str(td).split(":")
+    split = str(timedelta).split(":")
     hours = int(split[0])
     minutes = int(split[1])
     seconds = round(float(split[2]))
@@ -65,17 +65,17 @@ def main():
     datetime_one_time_alarm_open = None
 
     vertical_spacer(guizero_app, 10)
-    box_brightness = guizero.Box(guizero_app, width="fill")
-    box_brightness.set_border(1, "#aaaaaa")
-    guizero.Text(box_brightness, text="LED brightness").tk.configure(
+    box_led_brightness = guizero.Box(guizero_app, width="fill")
+    box_led_brightness.set_border(1, "#aaaaaa")
+    guizero.Text(box_led_brightness, text="LED brightness").tk.configure(
         font=("Liberation Sans", 12, "bold"))
 
-    def handle_brightness_changed():
-        neopixel_ring_clock.max_brightness = int(slider_brightness.value)
+    def handle_led_brightness_changed():
+        neopixel_ring_clock.max_brightness = int(slider_led_brightness.value)
         neopixel_ring_clock.update()
-    slider_brightness = guizero.Slider(box_brightness, start=0, end=255,
-                                       command=handle_brightness_changed, width="fill")
-    slider_brightness.value = maximum_duty_cycle
+    slider_led_brightness = guizero.Slider(box_led_brightness, start=0, end=255,
+                                           command=handle_led_brightness_changed, width="fill")
+    slider_led_brightness.value = maximum_duty_cycle
 
     vertical_spacer(guizero_app, 40)
     ########################################################################
@@ -102,7 +102,7 @@ def main():
         text="Then, open the blinds at ",
         align="left")
     textbox_open_blinds_time = guizero.TextBox(box_open_blinds_time,
-                                               text="11 AM", align="left")
+                                               text="9 AM", align="left")
     guizero.Text(box_open_blinds_time, text=".", align="left")
 
     text_daily_alarm_status = guizero.Text(box_daily_alarm,
@@ -116,7 +116,7 @@ def main():
 
     def set_daily_alarm(for_date=None):
         # Close the blinds a user-specified amount of time before sunrise.
-        # Open the blinds at a user specified absolute time.
+        # Then open the blinds at a user specified absolute time.
 
         # Coordinates for the City of Santa Clara, California
         sun = suntime.Sun(37.354444, -121.969167)
@@ -146,7 +146,7 @@ def main():
                     datetime_sunrise = sun.get_sunrise_time(
                         date_tomorrow).astimezone()
                 else:
-                    # sunrise is in the future today
+                    # Sunrise is in the future today.
                     datetime_sunrise = datetime_sunrise_today
 
         else:
@@ -203,7 +203,15 @@ def main():
 
     vertical_spacer(guizero_app, 40)
 
+    #################################################################
+    ############# Create GUI to move the blinds immediately #########
+    #################################################################
     box_move_now = guizero.Box(guizero_app)
+    box_move_now.set_border(1, "#aaaaaa")
+    guizero.Text(box_move_now, text="Move the blinds now").tk.configure(
+        font=("Liberation Sans", 12, "bold"))
+    vertical_spacer(box_daily_alarm, 10)
+
     guizero.PushButton(
         box_move_now,
         text="Open blinds now",
@@ -218,7 +226,7 @@ def main():
     vertical_spacer(guizero_app, 40)
 
     #################################################################
-    ################## Create gui for a one-time alarm ##############
+    ################## Create GUI for a one-time alarm ##############
     #################################################################
     box_one_time_alarm = guizero.Box(guizero_app, width="fill")
     box_one_time_alarm.set_border(1, "#aaaaaa")
@@ -277,7 +285,7 @@ def main():
     guizero.PushButton(box_one_time_alarm, text="Set one-time alarm",
                        command=set_one_time_alarm)
 
-    def tick():
+    def tick(debug_printouts=False):
         datetime_now = datetime.now().astimezone()
 
         nonlocal datetime_one_time_alarm_open
@@ -288,14 +296,21 @@ def main():
             timedelta_to_daily_alarm_close = \
                 datetime_daily_alarm_close - datetime_now
             total_seconds = timedelta_to_daily_alarm_close.total_seconds()
-            #print(f"total_seconds until daily alarm close: {total_seconds}")
+
+            if debug_printouts:
+                print(
+                    f"total_seconds until daily alarm close: {total_seconds}")
+
             if total_seconds > 0:
                 hours, minutes, seconds = \
                     timedelta_split(timedelta_to_daily_alarm_close)
                 text_daily_alarm_status2.value = \
                     f"Blinds will close in {hours} hr {minutes} min {seconds} sec"
+
             else:
-                #print("which is leq zero, so I am closing the blinds")
+                if debug_printouts:
+                    print("which is leq. zero, so I am closing the blinds")
+
                 text_daily_alarm_status2.value = \
                     f"Blinds closed at\n{datetime_now.strftime(DATETIME_FORMAT_STRING)}."
                 datetime_daily_alarm_close = None
@@ -305,14 +320,21 @@ def main():
             timedelta_to_daily_alarm_open = \
                 datetime_daily_alarm_open - datetime_now
             total_seconds = timedelta_to_daily_alarm_open.total_seconds()
-            #print(f"total_seconds until daily alarm open:  {total_seconds}")
+
+            if debug_printouts:
+                print(
+                    f"total_seconds until daily alarm open:  {total_seconds}")
+
             if total_seconds > 0:
                 hours, minutes, seconds = \
                     timedelta_split(timedelta_to_daily_alarm_open)
                 text_daily_alarm_status3.value = \
                     f"Blinds will open in {hours} hr {minutes} min {seconds} sec"
+
             else:
-                #print("    which is leq zero, so I am opening the blinds")
+                if debug_printouts:
+                    print("    which is leq zero, so I am opening the blinds")
+
                 text_daily_alarm_status3.value = \
                     f"Blinds opened at\n{datetime_now.strftime(DATETIME_FORMAT_STRING)}."
                 datetime_daily_alarm_open = None
