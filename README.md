@@ -1,5 +1,7 @@
 # Window blinds automatic open/close gadget
 
+![Photo of device to automatically open & close window blinds](window-blinds-auto-open-close.jpeg)
+
 ## Purpose
 
 I want to block harsh reflected sunlight in the early mornings, but I also want daylight to enter my room later in day.
