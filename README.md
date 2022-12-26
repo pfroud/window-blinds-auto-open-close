@@ -47,13 +47,11 @@ I got it at HSC Electronics (rest in peace) in 2018. Here's a picture of the lab
 
 The motor has a bolt hole circle which is **31 (thirty-one) millimeters** in diameter.
 
-Surely that's a mistake and it's actually 30 (thirty) mm...  
-No, *it really is 31 (thirty-one) mm*.
+Surely that's a mistake and it's actually 30 (thirty) mm... no, it really is 31 (thirty-one) mm.
 
-Amazingly, 31mm is *normal* for this size of gearmotor. The key is that the outside diameter of the gearbox is **37 (thirty-seven) millimeters**. 
+Amazingly, 31mm is normal for this size of gearmotor. The key is that the outside diameter of the gearbox is **37 (thirty-seven) millimeters**. 
 
-Searching for "31mm gearmotor mount" returns a scattering of suitable mounting plates.  
-Searching for "37mm gearmotor mount" returns tons of results. 
+Searching for "31mm gearmotor mount" returns a scattering of suitable mounting plates. Searching for "37mm gearmotor mount" instead returns tons of results for what we want.
 
 I had such a hard time figuring this out that I am stealing pictures from the internet, editing them, and re-hosting them in this Git repository:
 
