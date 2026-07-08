@@ -4,7 +4,7 @@ I want to block harsh reflected sunlight in the early mornings, but I also want 
 
 This device automatically closes window blinds before sunrise, then opens the window blinds at a time specified by the user.
 
-![Photo of device to automatically open & close window blinds](img/window-blinds-auto-open-close.jpeg)
+![Photo of device to automatically open & close window blinds](https://github.com/pfroud/window-blinds-auto-open-close/blob/main/img/window-blinds-auto-open-close.jpeg)
 
 ## Window blinds terminology
 
@@ -40,7 +40,7 @@ The motor is made by Source Engineering Inc and has this ridiculously long model
 
 I got it at HSC Electronics (rest in peace) in 2018. Here's a picture of the label, which lists some slightly interesting specs:
 
-![Printed label on cardboard box listing specifications for Source Engineering Inc 37JB270G/32ZYT30-2468 gearmotor](img/Source-Engineering-37JB270G-32ZYT30-2468-gearmotor-specs-label.jpg)
+![Printed label on cardboard box listing specifications for Source Engineering Inc 37JB270G/32ZYT30-2468 gearmotor](https://github.com/pfroud/window-blinds-auto-open-close/blob/main/img/Source-Engineering-37JB270G-32ZYT30-2468-gearmotor-specs-label.jpg)
 
 
 ### Motor mounting plate
@@ -57,8 +57,8 @@ I had such a hard time figuring this out that I am stealing pictures from the in
 
 <table>
 <tr>
-<td width="67%"><img src="img/gearmotor-diagram-37mm-outside-diameter-31mm-bolt-hole-circle.png" alt="Diagram of gearmotor with 37mm outside diameter and 31mm bolt hole circle"></td>
-<td><img src="img/gearmotor-mounting-plate-for-31mm-bolt-hole-circle.jpg" alt="Mounting plate for gearmotor with 31mm bolt hole circle"></td>
+<td width="67%"><img src="https://github.com/pfroud/window-blinds-auto-open-close/blob/main/img/gearmotor-diagram-37mm-outside-diameter-31mm-bolt-hole-circle.png" alt="Diagram of gearmotor with 37mm outside diameter and 31mm bolt hole circle"></td>
+<td><img src="https://github.com/pfroud/window-blinds-auto-open-close/blob/main/img/gearmotor-mounting-plate-for-31mm-bolt-hole-circle.jpg" alt="Mounting plate for gearmotor with 31mm bolt hole circle"></td>
 </tr>
 </table>
 
@@ -93,6 +93,6 @@ Screenshot of low-quality GUI:
 
 <p align="center">
     <!-- use HTML to center the image -->
-    <img alt="screenshot of GUI" src="img/screenshot-of-GUI.png">
+    <img alt="screenshot of GUI" src="https://github.com/pfroud/window-blinds-auto-open-close/blob/main/img/screenshot-of-GUI.png">
 </p>
 
